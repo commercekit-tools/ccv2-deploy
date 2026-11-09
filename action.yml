@@ -1,0 +1,108 @@
+name: CommerceKit CCv2 Deploy
+description: Deploy and monitor SAP Commerce Cloud CCv2 builds using current Cloud Portal APIs.
+author: CommerceKit
+branding:
+  icon: cloud
+  color: green
+inputs:
+  operation:
+    description: "deploy, resume, decide, or cancel."
+    required: false
+    default: "deploy"
+  token-endpoint:
+    description: "Technical-user HTTPS OAuth token endpoint."
+    required: true
+  client-id:
+    description: "Technical-user OAuth client ID."
+    required: true
+  client-secret:
+    description: "Technical-user OAuth client secret."
+    required: true
+  resource:
+    description: "OAuth resource, not scope."
+    required: true
+  subscription-code:
+    description: "Subscription path identifier."
+    required: true
+  deployment-code:
+    description: "Existing deployment; required for resume, decide, cancel; forbidden for deploy."
+    required: false
+  build-code:
+    description: "Existing build; required only for deploy."
+    required: false
+  environment-code:
+    description: "Target environment; required only for deploy."
+    required: false
+  database-update-mode:
+    description: "Explicit NONE, UPDATE, or INITIALIZE; required only for deploy."
+    required: false
+  strategy:
+    description: "Explicit ROLLING_UPDATE, RECREATE, or GREEN; required only for deploy."
+    required: false
+  validate-deployment-modes:
+    description: "Preflight deployment modes; false is valid only for deploy."
+    required: false
+    default: "true"
+  green-decision:
+    description: "MANUAL, ACCEPT, PREPARE_CANARY, or REJECT; decide requires a non-MANUAL decision."
+    required: false
+    default: "MANUAL"
+  decision-reason:
+    description: "Optional decision reason, at most 500 characters; invalid with MANUAL."
+    required: false
+  traffic-split-json:
+    description: "PREPARE_CANARY only; at most 32 KiB, endpoints/services, 50 entries each, integer percentages 0–100."
+    required: false
+  rollback-database:
+    description: "Cancellation only; requires available database rollback timestamp."
+    required: false
+    default: "false"
+  cancel-reason:
+    description: "Cancellation only; optional reason of 4–255 characters."
+    required: false
+  wait-for-completion:
+    description: "Must be true except for decide PREPARE_CANARY, which always hands off."
+    required: false
+    default: "true"
+  api-base-url:
+    description: "HTTPS Management API base URL without credentials, query, or fragment."
+    required: false
+    default: "https://portalapi.commerce.ondemand.com"
+  poll-interval-seconds:
+    description: "Integer from 10 to 600 seconds."
+    required: false
+    default: "60"
+  timeout-minutes:
+    description: "Local operation deadline, integer from 1 to 1440 minutes."
+    required: false
+    default: "240"
+outputs:
+  operation:
+    description: "Validated operation."
+  deployment-code:
+    description: "Current active deployment code, updated from decision response."
+  original-deployment-code:
+    description: "Originally created or supplied deployment code."
+  build-code:
+    description: "Input or recovered build code."
+  environment-code:
+    description: "Input or recovered environment code."
+  deployment-status:
+    description: "Last known vendor status; never ACTION_REQUIRED or TIMEOUT."
+  deployment-percentage:
+    description: "Last valid API percentage; empty until known."
+  action-required:
+    description: "true for manual/canary handoff, otherwise false."
+  decision:
+    description: "Submitted and accepted decision, or empty."
+  poll-count:
+    description: "Number of progress HTTP attempts, including retries."
+  duration-ms:
+    description: "Full monotonic operation duration."
+  result-json:
+    description: "Bounded sanitized schemaVersion 1 result."
+  notification-event:
+    description: "Validated provider-neutral NotificationEvent v1."
+runs:
+  using: node24
+  main: dist/index.js

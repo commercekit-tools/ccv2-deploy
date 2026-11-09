@@ -1,0 +1,7 @@
+dist/
+coverage/
+node_modules/
+.idea/
+*.iml
+contracts/notification-event-v1.schema.json
+pnpm-lock.yaml
