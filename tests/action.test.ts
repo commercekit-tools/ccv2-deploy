@@ -328,3 +328,94 @@ it("canary without split remains action required", async () => {
     decision: "PREPARE_CANARY",
   });
 });
+it.each(["decision", "traffic", "cancel"])(
+  "publishes internal-error before failing %s mutation",
+  async (operation) => {
+    const c = fakeCore(
+      operation === "cancel"
+        ? existing("cancel")
+        : {
+            ...existing("decide"),
+            "green-decision":
+              operation === "traffic" ? "PREPARE_CANARY" : "ACCEPT",
+            ...(operation === "traffic"
+              ? {
+                  "traffic-split-json":
+                    '{"services":[{"code":"synthetic","percentage":10}]}',
+                }
+              : {}),
+          },
+    );
+    const prefix =
+      operation === "cancel"
+        ? [token, detail, {}]
+        : [
+            token,
+            detail,
+            { deploymentStatus: "DEPLOYING" },
+            detail,
+            { deploymentDecisions: [] },
+            ...(operation === "traffic"
+              ? [{ decision: "PREPARE_CANARY" }]
+              : []),
+          ];
+    const r = await run(
+      c.core,
+      harness([...prefix, Response.json({}, { status: 500 })]).rt,
+    );
+    expect(r.outcome).toBe("internal-error");
+    expect(r.error?.code).toMatch(/AMBIGUOUS$/);
+    expect(validateEvent(JSON.parse(c.outputs["notification-event"]!))).toBe(
+      true,
+    );
+    expect(c.calls.at(-1)).toBe("failed");
+  },
+);
+it.each(["FAIL", "DEPLOYING"])(
+  "monitors cancellation to failure or timeout %s",
+  async (status) => {
+    const c = fakeCore({ ...existing("cancel"), "timeout-minutes": "1" });
+    const h = harness([
+      token,
+      detail,
+      {},
+      new Response(null, { status: 202 }),
+      { deploymentStatus: status },
+      { code: id },
+    ]);
+    const r = await run(c.core, h.rt);
+    expect(r.outcome).toBe(status === "FAIL" ? "failure" : "internal-error");
+    expect(r.cancellation?.requested).toBe(true);
+  },
+);
+it("does not repeat a previously prepared canary", async () => {
+  const c = fakeCore({
+    ...existing("decide"),
+    "green-decision": "PREPARE_CANARY",
+  });
+  const h = harness([
+    token,
+    detail,
+    { deploymentStatus: "DEPLOYING" },
+    detail,
+    { deploymentDecisions: [{ type: "PREPARE_CANARY" }] },
+  ]);
+  expect(await run(c.core, h.rt)).toMatchObject({
+    error: { code: "DEPLOYMENT_DECISION_FAILED" },
+  });
+  expect(h.fetcher).toHaveBeenCalledTimes(5);
+});
+it("preserves long unknown vendor status in result without breaking event bounds", async () => {
+  const c = fakeCore(base);
+  const status = "X".repeat(128);
+  const h = harness([
+    token,
+    { code: id },
+    { code: id },
+    { deploymentStatus: status },
+  ]);
+  expect((await run(c.core, h.rt)).deploymentStatus).toBe(status);
+  const e = JSON.parse(c.outputs["notification-event"]!);
+  expect(validateEvent(e)).toBe(true);
+  expect(e.data.deploymentStatus).toBeUndefined();
+});
