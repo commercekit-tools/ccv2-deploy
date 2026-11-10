@@ -294,3 +294,39 @@ it.each([
   });
   expect(value.data).not.toHaveProperty("originalDeploymentCode");
 });
+
+it("delegates the GitHub environment allowlist to the package without reading other values", () => {
+  const h = harness([]);
+  const env = { GITHUB_REPOSITORY: "synthetic/example", GITHUB_RUN_ID: "123" };
+  Object.defineProperty(env, "GITHUB_EVENT_PATH", {
+    get() {
+      throw Error("Full GitHub event must not be read");
+    },
+  });
+  Object.defineProperty(env, "UNRELATED_SECRET", {
+    enumerable: true,
+    get() {
+      throw Error("Full environment must not be read");
+    },
+  });
+  expect(context(env, h.safe)).toMatchObject({
+    runUrl: "https://github.com/synthetic/example/actions/runs/123",
+  });
+});
+it("retains Deploy markup/JWT protection while using shared stack and secret sanitization", () => {
+  const h = harness([]);
+  h.safe.add("synthetic secret&value");
+  for (const value of [
+    "synthetic secret&value",
+    encodeURIComponent("synthetic secret&value"),
+    new URLSearchParams({ v: "synthetic secret&value" }).toString().slice(2),
+  ])
+    expect(h.safe.text(value)).toBe("[REDACTED]");
+  expect(h.safe.text("<b>Error</b> at privateFunction(private-file:1)")).toBe(
+    "Error",
+  );
+  expect(h.safe.text("eyJsynthetic.payload.signature")).toBe("[REDACTED]");
+  expect(h.safe.text("<b></b>")).toBe("");
+  expect(h.safe.error("")).toBe("Operation failed.");
+  expect(h.safe.text("bounded", 3)).toBe("bou");
+});

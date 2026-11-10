@@ -14,7 +14,7 @@ Both packages are published GitHub Packages dependencies pinned exactly to **0.0
 | `src/notification.ts`                                                         | MIXED — SPLIT                | Local result-to-event field mapping and secret-aware environment prefilter; package owns envelope, context, links and validation  |
 | `src/api.ts`                                                                  | DEPLOY-SPECIFIC — KEEP       | Endpoint paths, expected statuses/shapes, identities, modes, decision predicate and cancellation options                          |
 | `src/action.ts`, `src/result.ts`, `src/errors.ts`                             | DEPLOY-SPECIFIC — KEEP       | Lifecycle, timeout outcome, safe result, outputs, summary and stable public error codes                                           |
-| Sandbox helpers and assertions                                                | DEPLOY-SPECIFIC — KEEP       | Fixed scenarios and cleanup; assertions use shared event validator                                                                |
+| Sandbox helpers and assertions                                                | DEPLOY-SPECIFIC — KEEP       | Shared token manager/client for prerequisites and shared event validator; local fixed scenarios/control API/cleanup               |
 
 ## Request policies
 
@@ -32,3 +32,11 @@ Shared transport errors map to existing Deploy errors. Problem title/detail rema
 The public `action.yml` inputs and outputs are unchanged. Tests exercise every operation, green handoff/ACCEPT/PREPARE_CANARY/REJECT, new deployment codes, optional traffic split, rollback eligibility and cancellation monitoring. Every Action test event is checked by the shared full validator. Package compatibility checks and regular CI are offline after dependency installation; no live Sandbox or provider webhook is invoked.
 
 Dependencies are bundled into `dist/index.js` with notices in `dist/licenses.txt`. Workflow users need no package authentication. Maintainers and repository Actions require GitHub Packages read access; see [Contributing](../CONTRIBUTING.md). Package upgrades require full deployment regression, guarded Sandbox verification and coordinated integration before release.
+
+## Remaining adapters
+
+The package owns the GitHub environment allowlist; Deploy filters values as the package reads them to reject registered secrets and controls without enumerating the environment. Input credential types and result event-status/error types come from the packages. Base URLs are validated once by the appropriate shared validator. Shared sanitizers own secret encodings, bearer/header redaction, URL removal, text bounds and stack removal. Deploy retains HTML/JWT filtering and summary escaping because neither pinned package exports those protections.
+
+Sandbox prerequisite OAuth, Management requests and polling sleep also use `ccv2-client`. The separate control API helper remains local: its run/scenario/cleanup operations use a control token with ordinary `Authorization`, not technical-user `x-approuter-authorization`. All ten scenarios, fixed origin, confirmation and always-run cleanup remain unchanged.
+
+Lint rules prevent direct fetch in Action modules and Sandbox preparation, and direct Ajv imports in contract consumers. This keeps new transport and schema validation work routed through the shared packages. Small local adapters still translate transport errors into stable Deploy errors, count progress requests and enforce endpoint DTOs and unsafe-mutation policy.

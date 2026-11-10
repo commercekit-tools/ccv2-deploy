@@ -7,23 +7,18 @@ import type { Result } from "./result.js";
 import type { Sanitizer } from "./security.js";
 import { controls } from "./inputs.js";
 export function context(env: NodeJS.ProcessEnv, safe: Sanitizer) {
-  const approved: NodeJS.ProcessEnv = {};
-  for (const key of [
-    "GITHUB_REPOSITORY",
-    "GITHUB_REF",
-    "GITHUB_SHA",
-    "GITHUB_ACTOR",
-    "GITHUB_WORKFLOW",
-    "GITHUB_JOB",
-    "GITHUB_RUN_ID",
-    "GITHUB_RUN_ATTEMPT",
-    "GITHUB_SERVER_URL",
-  ]) {
-    const value = env[key];
-    if (value && !controls.test(value) && !safe.contains(value))
-      approved[key] = value;
-  }
-  const ctx = extractSafeGitHubContext(approved);
+  // The package owns the environment allowlist. Filter only values it reads,
+  // retaining Deploy's stricter rejection of controls and registered secrets.
+  const ctx = extractSafeGitHubContext(
+    new Proxy(env, {
+      get(target, key: string) {
+        const value = target[key];
+        return value && !controls.test(value) && !safe.contains(value)
+          ? value
+          : undefined;
+      },
+    }),
+  );
   if (ctx.runUrl && safe.contains(ctx.runUrl)) delete ctx.runUrl;
   return ctx;
 }

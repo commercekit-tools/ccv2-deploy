@@ -14,16 +14,18 @@ export class Sanitizer {
   }
   text(value: string, max = 1000): string {
     // Keep Deploy's plain-text/URL/JWT disclosure policy atop shared redaction.
-    return sanitizeBoundedText(
-      plainText(redactTransportText(value, [...this.secrets]))
-        .replace(/eyJ[\w-]+\.[\w-]+\.[\w-]+/g, "[REDACTED]")
-        .split(/\s+at\s+\S+\s*\(/)[0]!,
-      max,
-      [...this.secrets],
-    ).trim();
+    const text = plainText(
+      redactTransportText(value, [...this.secrets]),
+    ).replace(/eyJ[\w-]+\.[\w-]+\.[\w-]+/g, "[REDACTED]");
+    return text.trim()
+      ? sanitizeBoundedText(
+          sanitizeErrorMessage(text, [...this.secrets]),
+          max,
+        ).trim()
+      : "";
   }
   error(value: string): string {
-    return this.text(sanitizeErrorMessage(value, [...this.secrets]));
+    return this.text(value) || sanitizeErrorMessage("");
   }
   contains(value: string): boolean {
     return redactKnownSecrets(value, [...this.secrets]) !== value;

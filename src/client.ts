@@ -4,11 +4,14 @@ import {
   Ccv2TransportError,
   type Ccv2RequestOptions,
   type Ccv2Response,
+  type TechnicalUserCredentials,
 } from "@commercekit-tools/ccv2-client";
 import type { Inputs } from "./inputs.js";
 import type { Runtime } from "./runtime.js";
 import type { Sanitizer } from "./security.js";
 import { ActionError, invalidResponse, waitTimeout } from "./errors.js";
+
+const retry = { maxAttempts: 3, baseDelayMs: 1000, maxDelayMs: 30000 };
 
 // Only Action error translation and dependency wiring live here; all transport/auth
 // behavior is owned by the pinned, framework-independent package.
@@ -17,7 +20,7 @@ export class DeployClient {
   private readonly shared;
   private authenticationFailure: unknown;
   constructor(
-    public rt: Runtime,
+    rt: Runtime,
     public signal: AbortSignal,
     input: Inputs,
     safe: Sanitizer,
@@ -31,18 +34,17 @@ export class DeployClient {
       fetch: (...args) => rt.fetch(...args),
       maskSecret: (value) => safe.add(value),
     };
-    this.tokens = new TechnicalUserTokenManager(
-      {
-        tokenEndpoint: input.tokenEndpoint,
-        clientId: input.clientId,
-        clientSecret: input.clientSecret,
-        resource: input.resource,
-      },
-      {
-        runtime: dependencies,
-        retry: { maxAttempts: 3, baseDelayMs: 1000, maxDelayMs: 30000 },
-      },
-    );
+    // Explicitly project credentials: never pass the full Action inputs to masking.
+    const credentials: TechnicalUserCredentials = {
+      tokenEndpoint: input.tokenEndpoint,
+      clientId: input.clientId,
+      clientSecret: input.clientSecret,
+      resource: input.resource,
+    };
+    this.tokens = new TechnicalUserTokenManager(credentials, {
+      runtime: dependencies,
+      retry,
+    });
     this.shared = createCcv2Client({
       baseUrl: input.apiBaseUrl,
       tokens: {
@@ -64,12 +66,7 @@ export class DeployClient {
           return rt.fetch(...args);
         },
       },
-      secrets: [
-        input.tokenEndpoint,
-        input.clientId,
-        input.clientSecret,
-        input.resource,
-      ],
+      secrets: Object.values(credentials),
     });
   }
   async authenticate() {
@@ -102,7 +99,7 @@ export class DeployClient {
         signal: this.signal,
         timeoutMs: 30000,
         maxResponseBytes: 262144,
-        retry: { maxAttempts: 3, baseDelayMs: 1000, maxDelayMs: 30000 },
+        retry,
         refreshOn401: true,
       });
     } catch (error) {

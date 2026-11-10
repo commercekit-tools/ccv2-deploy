@@ -1,3 +1,8 @@
+import {
+  TechnicalUserTokenManager,
+  createCcv2Client,
+  defaultRuntime,
+} from "@commercekit-tools/ccv2-client";
 import * as core from "@actions/core";
 import { base, scenarios, request } from "./common.mjs";
 try {
@@ -70,40 +75,35 @@ try {
       faults,
     },
   );
-  const tokenResponse = await fetch(base + "/oauth2/token", {
-    method: "POST",
-    redirect: "error",
-    signal: AbortSignal.timeout(30000),
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
-      Accept: "application/json",
-    },
-    body: new URLSearchParams({
-      client_id: c.clientId,
-      client_secret: c.clientSecret,
+  const tokens = new TechnicalUserTokenManager(
+    {
+      tokenEndpoint: c.tokenUrl,
+      clientId: c.clientId,
+      clientSecret: c.clientSecret,
       resource: c.resource,
-      grant_type: "client_credentials",
-    }),
-  });
-  if (!tokenResponse.ok) throw Error("Synthetic authentication failed");
-  const token = (await tokenResponse.json()).access_token;
-  if (typeof token !== "string" || !token) throw Error();
-  core.setSecret(token);
+    },
+    { runtime: { maskSecret: core.setSecret } },
+  );
+  const client = createCcv2Client({ baseUrl: base, tokens });
   const prefix = "/v2/subscriptions/131762872233634f29fdeb7d50983aa4";
   async function management(path, method = "GET", body) {
-    const response = await fetch(base + prefix + path, {
+    const response = await client.request(prefix + path, {
       method,
-      redirect: "error",
-      signal: AbortSignal.timeout(30000),
+      policy: method === "GET" ? "safe-read" : "unsafe-mutation",
+      refreshOn401: true,
       headers: {
         Accept: "application/json",
-        "x-approuter-authorization": `Bearer ${token}`,
         ...(body ? { "Content-Type": "application/json" } : {}),
       },
       ...(body ? { body: JSON.stringify(body) } : {}),
     });
-    if (!response.ok) throw Error("Synthetic prerequisite request failed");
-    return response.json();
+    if (
+      response.status < 200 ||
+      response.status >= 300 ||
+      response.body.kind !== "json"
+    )
+      throw Error("Synthetic prerequisite request failed");
+    return response.body.value;
   }
   const build = await management("/builds", "POST", {
     branch: "main",
@@ -122,7 +122,7 @@ try {
       break;
     }
     if (progress.buildStatus === "FAIL") throw Error();
-    await new Promise((resolve) => setTimeout(resolve, 10000));
+    await defaultRuntime.sleep(10000);
   }
   if (!built) throw Error("Prerequisite build timed out");
   const environments = await management("/environments");

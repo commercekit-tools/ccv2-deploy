@@ -1,6 +1,7 @@
 import {
   validateTechnicalUserTokenEndpoint,
   validateManagementApiBaseUrl,
+  type TechnicalUserCredentials,
 } from "@commercekit-tools/ccv2-client";
 import { ActionError } from "./errors.js";
 import type { Sanitizer } from "./security.js";
@@ -19,10 +20,12 @@ export function textInput(
     throw new ActionError("INVALID_INPUT", `Invalid ${name} input.`);
   return value;
 }
-export function httpsUrl(value: string): URL {
+export function httpsUrl(
+  value: string,
+  validate = validateTechnicalUserTokenEndpoint,
+): URL {
   try {
-    const u = validateTechnicalUserTokenEndpoint(value);
-    return u;
+    return validate(value);
   } catch {
     throw new ActionError(
       "INVALID_INPUT",
@@ -42,11 +45,7 @@ export interface TrafficSplitRequest {
   endpoints?: { code: string; percentage: number }[];
   services?: { code: string; percentage: number }[];
 }
-export interface Inputs {
-  tokenEndpoint: string;
-  clientId: string;
-  clientSecret: string;
-  resource: string;
+export interface Inputs extends TechnicalUserCredentials {
   subscriptionCode: string;
   operation: Operation;
   deploymentCode?: string;
@@ -228,9 +227,9 @@ export function readInputs(
     ...(split ? { trafficSplit: trafficSplit(split) } : {}),
     rollbackDatabase,
     ...(cancelReason ? { cancelReason } : {}),
-    apiBaseUrl: validateManagementApiBaseUrl(
-      httpsUrl(get("api-base-url") || "https://portalapi.commerce.ondemand.com")
-        .href,
+    apiBaseUrl: httpsUrl(
+      get("api-base-url") || "https://portalapi.commerce.ondemand.com",
+      validateManagementApiBaseUrl,
     ).href,
     pollIntervalMs: integer("poll-interval-seconds", "60", 10, 600) * 1000,
     timeoutMs: integer("timeout-minutes", "240", 1, 1440) * 60000,
