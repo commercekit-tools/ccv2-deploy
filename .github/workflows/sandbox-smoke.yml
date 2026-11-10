@@ -1,0 +1,89 @@
+name: Manual Sandbox deployment smoke
+on:
+  workflow_dispatch:
+    inputs:
+      scenario:
+        type: choice
+        required: true
+        options:
+          [
+            rolling-success,
+            rolling-failure,
+            nonterminating,
+            rate-limit,
+            create-error,
+            green-manual,
+            green-accept,
+            green-prepare-canary,
+            green-reject,
+            cancel,
+          ]
+      confirmation:
+        type: string
+        required: true
+        description: Type RUN-COMMERCEKIT-SANDBOX-DEPLOY
+permissions:
+  contents: read
+concurrency:
+  group: ccv2-deploy-sandbox-smoke
+  cancel-in-progress: false
+jobs:
+  smoke:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .node-version
+      - run: corepack enable
+      - run: pnpm install --frozen-lockfile
+      - id: prepare
+        run: node scripts/sandbox/prepare.mjs
+        env:
+          SCENARIO: ${{ inputs.scenario }}
+          CONFIRMATION: ${{ inputs.confirmation }}
+      - id: deploy
+        uses: ./
+        continue-on-error: true
+        with:
+          token-endpoint: ${{ steps.prepare.outputs.token-endpoint }}
+          client-id: ${{ steps.prepare.outputs.client-id }}
+          client-secret: ${{ steps.prepare.outputs.client-secret }}
+          resource: ${{ steps.prepare.outputs.resource }}
+          subscription-code: ${{ steps.prepare.outputs.subscription-code }}
+          operation: ${{ steps.prepare.outputs.operation }}
+          deployment-code: ${{ steps.prepare.outputs.deployment-code }}
+          build-code: ${{ steps.prepare.outputs.build-code }}
+          environment-code: ${{ steps.prepare.outputs.environment-code }}
+          database-update-mode: ${{ steps.prepare.outputs.database-update-mode }}
+          strategy: ${{ steps.prepare.outputs.strategy }}
+          green-decision: ${{ steps.prepare.outputs.green-decision }}
+          traffic-split-json: ${{ steps.prepare.outputs.traffic-split-json }}
+          api-base-url: https://ccv2.sandbox.commercekit.tools
+          poll-interval-seconds: "10"
+          timeout-minutes: "1"
+      - name: Assert outputs and isolated run state
+        if: ${{ always() && steps.deploy.outcome != 'skipped' && steps.prepare.outcome == 'success' }}
+        run: node scripts/sandbox/assert.mjs
+        env:
+          SCENARIO: ${{ inputs.scenario }}
+          RUN_ID: ${{ steps.prepare.outputs.run-id }}
+          CONTROL_TOKEN: ${{ steps.prepare.outputs.control-token }}
+          CLIENT_ID: ${{ steps.prepare.outputs.client-id }}
+          CLIENT_SECRET: ${{ steps.prepare.outputs.client-secret }}
+          RESOURCE: ${{ steps.prepare.outputs.resource }}
+          TOKEN_ENDPOINT: ${{ steps.prepare.outputs.token-endpoint }}
+          RESULT_JSON: ${{ steps.deploy.outputs.result-json }}
+          NOTIFICATION_EVENT: ${{ steps.deploy.outputs.notification-event }}
+          BUILD_CODE: ${{ steps.deploy.outputs.build-code }}
+          DEPLOYMENT_STATUS: ${{ steps.deploy.outputs.deployment-status }}
+          POLL_COUNT: ${{ steps.deploy.outputs.poll-count }}
+          DURATION_MS: ${{ steps.deploy.outputs.duration-ms }}
+          ACTION_OUTCOME: ${{ steps.deploy.outcome }}
+      - name: Delete disposable run
+        if: ${{ always() }}
+        run: node scripts/sandbox/cleanup.mjs
+        env:
+          RUN_ID: ${{ steps.prepare.outputs.run-id }}
+          CONTROL_TOKEN: ${{ steps.prepare.outputs.control-token }}

@@ -1,0 +1,169 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://commercekit.tools/schemas/notification-event-v1.schema.json",
+  "title": "CommerceKit NotificationEvent v1",
+  "type": "object",
+  "required": ["schemaVersion", "eventId", "eventType", "status", "occurredAt", "source", "data"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "eventId": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "eventType": {
+      "enum": [
+        "check.completed",
+        "ccv2.build.started",
+        "ccv2.build.completed",
+        "ccv2.deployment.started",
+        "ccv2.deployment.action-required",
+        "ccv2.deployment.completed"
+      ]
+    },
+    "status": {
+      "enum": ["started", "success", "warning", "failure", "cancelled", "internal-error", "action-required"]
+    },
+    "occurredAt": { "type": "string", "format": "date-time", "maxLength": 64 },
+    "source": {
+      "type": "object",
+      "required": ["product", "component"],
+      "properties": {
+        "product": { "const": "commercekit" },
+        "component": { "enum": ["cli-check", "ccv2-build", "ccv2-deploy", "workflow"] },
+        "version": { "type": "string", "maxLength": 64 }
+      },
+      "additionalProperties": true
+    },
+    "context": {
+      "type": "object",
+      "properties": {
+        "repository": { "type": "string", "maxLength": 200 },
+        "ref": { "type": "string", "maxLength": 300 },
+        "commit": { "type": "string", "maxLength": 128 },
+        "actor": { "type": "string", "maxLength": 128 },
+        "workflow": { "type": "string", "maxLength": 200 },
+        "job": { "type": "string", "maxLength": 200 },
+        "runId": { "type": "string", "maxLength": 64 },
+        "runAttempt": { "type": "integer", "minimum": 1 },
+        "runUrl": { "type": "string", "format": "uri", "maxLength": 2048 },
+        "environment": { "type": "string", "maxLength": 128 }
+      },
+      "additionalProperties": true
+    },
+    "data": { "type": "object" },
+    "links": {
+      "type": "array",
+      "maxItems": 3,
+      "items": {
+        "type": "object",
+        "required": ["label", "url"],
+        "properties": {
+          "label": { "type": "string", "minLength": 1, "maxLength": 80 },
+          "url": { "type": "string", "format": "uri", "maxLength": 2048 }
+        },
+        "additionalProperties": true
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "eventType": { "const": "check.completed" } } },
+      "then": {
+        "properties": {
+          "status": { "enum": ["success", "warning", "failure", "cancelled", "internal-error"] },
+          "data": { "$ref": "#/$defs/check" }
+        },
+        "allOf": [
+          {
+            "if": { "properties": { "status": { "enum": ["success", "warning", "failure"] } } },
+            "then": { "properties": { "data": { "required": ["filesChecked", "errors", "warnings"] } } }
+          }
+        ]
+      }
+    },
+    {
+      "if": { "properties": { "eventType": { "const": "ccv2.build.started" } } },
+      "then": { "properties": { "status": { "const": "started" }, "data": { "$ref": "#/$defs/build" } } }
+    },
+    {
+      "if": { "properties": { "eventType": { "const": "ccv2.build.completed" } } },
+      "then": {
+        "properties": {
+          "status": { "enum": ["success", "failure", "cancelled", "internal-error"] },
+          "data": { "$ref": "#/$defs/build" }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "eventType": { "const": "ccv2.deployment.started" } } },
+      "then": { "properties": { "status": { "const": "started" }, "data": { "$ref": "#/$defs/deployment" } } }
+    },
+    {
+      "if": { "properties": { "eventType": { "const": "ccv2.deployment.action-required" } } },
+      "then": { "properties": { "status": { "const": "action-required" }, "data": { "$ref": "#/$defs/deployment" } } }
+    },
+    {
+      "if": { "properties": { "eventType": { "const": "ccv2.deployment.completed" } } },
+      "then": {
+        "properties": {
+          "status": { "enum": ["success", "failure", "cancelled", "internal-error"] },
+          "data": { "$ref": "#/$defs/deployment" }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "error": {
+      "type": "object",
+      "required": ["message"],
+      "properties": {
+        "code": { "type": "string", "maxLength": 100 },
+        "message": { "type": "string", "minLength": 1, "maxLength": 1000 }
+      },
+      "additionalProperties": true
+    },
+    "check": {
+      "type": "object",
+      "properties": {
+        "mode": { "enum": ["full", "changed"] },
+        "changedFrom": { "type": "string", "maxLength": 200 },
+        "filesChecked": { "type": "integer", "minimum": 0 },
+        "errors": { "type": "integer", "minimum": 0 },
+        "warnings": { "type": "integer", "minimum": 0 },
+        "durationMs": { "type": "integer", "minimum": 0 },
+        "error": { "$ref": "#/$defs/error" }
+      },
+      "additionalProperties": true
+    },
+    "build": {
+      "type": "object",
+      "properties": {
+        "subscriptionCode": { "type": "string", "maxLength": 128 },
+        "applicationCode": { "type": "string", "maxLength": 128 },
+        "buildCode": { "type": "string", "maxLength": 128 },
+        "buildName": { "type": "string", "maxLength": 200 },
+        "branch": { "type": "string", "maxLength": 300 },
+        "buildStatus": { "type": "string", "maxLength": 100 },
+        "durationMs": { "type": "integer", "minimum": 0 },
+        "retryCount": { "type": "integer", "minimum": 0 },
+        "error": { "$ref": "#/$defs/error" }
+      },
+      "additionalProperties": true
+    },
+    "deployment": {
+      "type": "object",
+      "properties": {
+        "subscriptionCode": { "type": "string", "maxLength": 128 },
+        "applicationCode": { "type": "string", "maxLength": 128 },
+        "deploymentCode": { "type": "string", "maxLength": 128 },
+        "buildCode": { "type": "string", "maxLength": 128 },
+        "environmentCode": { "type": "string", "maxLength": 128 },
+        "deploymentMode": { "type": "string", "maxLength": 100 },
+        "databaseUpdateMode": { "type": "string", "maxLength": 100 },
+        "deploymentStatus": { "type": "string", "maxLength": 100 },
+        "durationMs": { "type": "integer", "minimum": 0 },
+        "decisionType": { "type": "string", "maxLength": 100 },
+        "error": { "$ref": "#/$defs/error" }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true
+}
