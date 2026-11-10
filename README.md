@@ -140,6 +140,12 @@ Safe reads and token requests retry selected transient errors at most three atte
 
 `result-json` is a compact allowlisted schemaVersion 1 object containing operation, outcome, known deployment/build/environment identifiers, modes, last vendor status/percentage, poll count, duration, actionRequired, decision, newDeploymentCode, timedOut, cancellation requested/rollback flags, trafficSplit updated flag, and safe error code/message. Unknown optional fields are omitted. Each JSON output is bounded to 16 KiB. No raw responses, stage/history data, reasons, credentials, or traffic entities are output.
 
-DEPLOYED → success; FAIL → failure; UNDEPLOYED → cancelled; manual/canary handoff → action-required; timeout, auth/API/client errors or undocumented status → internal-error. Handoffs emit `ccv2.deployment.action-required`; all other final events emit `ccv2.deployment.completed`. Events validate offline against the pinned [notify contract](contracts/README.md). Only approved GitHub context variables are read. Links include a validated workflow URL; no Cloud Portal URL is guessed.
+DEPLOYED → success; FAIL → failure; UNDEPLOYED → cancelled; manual/canary handoff → action-required; timeout, auth/API/client errors or undocumented status → internal-error. Handoffs emit `ccv2.deployment.action-required`; all other final events emit `ccv2.deployment.completed`. Events validate offline through the pinned [shared notification contract](contracts/README.md). Only approved GitHub context variables are read. Links include a validated workflow URL; no Cloud Portal URL is guessed.
 
 See [API contract](docs/api-contract.md), [Sandbox](docs/sandbox.md), [security](SECURITY.md), [contributing](CONTRIBUTING.md), and [release gates](RELEASING.md).
+
+## Shared packages
+
+Exact runtime pins are `@commercekit-tools/notification-contract@0.0.2` and `@commercekit-tools/ccv2-client@0.0.2`. The former owns NotificationEvent v1 types, deployment event creation, validation, context, links, and event text sanitization. The latter provides framework-independent technical-user OAuth and CCv2 HTTP transport, including token refresh, URL validation, timeouts, redaction, and safe-read/unsafe-mutation policies.
+
+Deploy retains inputs, endpoint DTO validation, mode preflight, the deployment lifecycle, green decisions, traffic split, cancellation, results, outputs, and summaries. Both packages are bundled into `dist`; workflow users need no registry configuration or package credentials. Maintainers and CI need GitHub Packages read access. Package upgrades require the full deployment regression suite and guarded Sandbox verification before release. See the [ownership inventory](docs/shared-packages.md). The Action remains **UNRELEASED**.

@@ -21,13 +21,12 @@
     "audit": "pnpm audit --prod --audit-level=high",
     "scan:public": "node scripts/scan-public-files.mjs",
     "quality": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm contracts:check && pnpm test:coverage && pnpm bundle:check && pnpm scan:public && pnpm audit",
-    "contracts:check": "node scripts/contracts.mjs",
-    "contracts:notify:update": "node scripts/update-notify.mjs"
+    "contracts:check": "node scripts/contracts.mjs"
   },
   "dependencies": {
     "@actions/core": "3.0.1",
-    "ajv": "8.20.0",
-    "ajv-formats": "3.0.1"
+    "@commercekit-tools/ccv2-client": "0.0.2",
+    "@commercekit-tools/notification-contract": "0.0.2"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

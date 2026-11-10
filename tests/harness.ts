@@ -1,6 +1,6 @@
 import { vi } from "vitest";
-import { Http, type Runtime } from "../src/http.js";
-import { TokenManager } from "../src/auth.js";
+import type { Runtime } from "../src/runtime.js";
+import { DeployClient } from "../src/client.js";
 import { DeploymentApi } from "../src/api.js";
 import { Sanitizer } from "../src/security.js";
 import { inputs } from "./fixtures.js";
@@ -20,7 +20,11 @@ export function harness(items: (object | Error)[]) {
     });
   });
   const rt: Runtime = {
-    fetch: fetcher as typeof fetch,
+    fetch: ((url, init) =>
+      fetcher(String(url), {
+        ...init,
+        headers: Object.fromEntries(new Headers(init?.headers)),
+      })) as typeof fetch,
     now: () => time,
     sleep: vi.fn(async (ms) => {
       time += ms;
@@ -28,13 +32,21 @@ export function harness(items: (object | Error)[]) {
     random: () => 0,
   };
   const safe = new Sanitizer(vi.fn());
-  const http = new Http(rt, new AbortController().signal);
-  const tokens = new TokenManager(inputs(), http, safe);
-  const api = new DeploymentApi(inputs(), http, tokens);
+  const client = new DeployClient(
+    rt,
+    new AbortController().signal,
+    inputs(),
+    safe,
+    () => {
+      api.pollCount++;
+    },
+  );
+  const tokens = client.tokens;
+  const api = new DeploymentApi(inputs(), client);
   return {
     rt,
     safe,
-    http,
+    client,
     tokens,
     api,
     fetcher,

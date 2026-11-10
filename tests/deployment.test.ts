@@ -69,7 +69,11 @@ it.each(["create", "decide", "cancel", "traffic"] as const)(
     for (const failure of [
       new Error("secret"),
       Response.json({}, { status: 429 }),
-      Response.json({}, { status: 503 }),
+      ...[500, 502, 503, 504].map((status) => Response.json({}, { status })),
+      new Response("bad", {
+        status: op === "cancel" ? 202 : 201,
+        headers: { "content-type": "application/json" },
+      }),
       new Response("bad", { status: 201 }),
     ]) {
       const h = harness([token, ...(op === "cancel" ? [{}] : []), failure]);
@@ -199,8 +203,7 @@ it("requires rollback timestamp and supports cancel reason", async () => {
         rollbackDatabase: true,
         cancelReason: "Synthetic cancellation",
       },
-      h.http,
-      h.tokens,
+      h.client,
     );
     if (available) {
       await api.cancel(id);
@@ -277,8 +280,7 @@ it("includes decision reason and omits invalid percentage", async () => {
   ]);
   const api = new DeploymentApi(
     { ...inputs(), decisionReason: "Synthetic reason" },
-    h.http,
-    h.tokens,
+    h.client,
   );
   await api.decide(id, "ACCEPT");
   expect(h.fetcher.mock.calls[1]![1].body).toContain("reason");

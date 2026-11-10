@@ -1,12 +1,12 @@
 import { it, expect, describe, vi } from "vitest";
-import { Http, retryAfter } from "../src/http.js";
+import { DeployClient } from "../src/client.js";
 
 import { inputs } from "./fixtures.js";
 import { harness, token } from "./harness.js";
 describe("technical-user authentication", () => {
   it("encodes form, masks token, uses HTTPS without redirects", async () => {
     const h = harness([token]);
-    expect(await h.tokens.get()).toBe(token.access_token);
+    expect(await h.client.authenticate()).toBe(token.access_token);
     const [url, init] = h.fetcher.mock.calls[0] as unknown as [
       string,
       RequestInit,
@@ -14,8 +14,8 @@ describe("technical-user authentication", () => {
     expect(url).toBe(inputs().tokenEndpoint);
     expect(init.redirect).toBe("error");
     expect(init.headers).toEqual({
-      "Content-Type": "application/x-www-form-urlencoded",
-      Accept: "application/json",
+      "content-type": "application/x-www-form-urlencoded",
+      accept: "application/json",
     });
     expect(
       Object.fromEntries(new URLSearchParams(init.body as string)),
@@ -29,11 +29,11 @@ describe("technical-user authentication", () => {
   });
   it("reuses and proactively refreshes", async () => {
     const h = harness([token, token]);
-    await h.tokens.get();
-    await h.tokens.get();
+    await h.client.authenticate();
+    await h.client.authenticate();
     expect(h.fetcher).toHaveBeenCalledTimes(1);
     h.advance(3540001);
-    await h.tokens.get();
+    await h.client.authenticate();
     expect(h.fetcher).toHaveBeenCalledTimes(2);
   });
   it("missing expiry reuses until explicit refresh; lowercase Bearer accepted", async () => {
@@ -41,11 +41,12 @@ describe("technical-user authentication", () => {
       { ...token, expires_in: undefined, token_type: "bearer" },
       token,
     ]);
-    await h.tokens.get();
+    await h.client.authenticate();
     h.advance(1e9);
-    await h.tokens.get();
+    await h.client.authenticate();
     expect(h.fetcher).toHaveBeenCalledTimes(1);
-    await h.tokens.get(true);
+    h.tokens.invalidate();
+    await h.client.authenticate();
     expect(h.fetcher).toHaveBeenCalledTimes(2);
   });
   it.each([
@@ -57,7 +58,7 @@ describe("technical-user authentication", () => {
     { ...token, expires_in: 1.5 },
   ])("rejects malformed token", async (t) => {
     const h = harness([t]);
-    await expect(h.tokens.get()).rejects.toMatchObject({
+    await expect(h.client.authenticate()).rejects.toMatchObject({
       code: "INVALID_API_RESPONSE",
     });
     expect(h.fetcher).toHaveBeenCalledTimes(1);
@@ -66,7 +67,7 @@ describe("technical-user authentication", () => {
     const h = harness([
       Response.json({ error: "invalid_resource" }, { status }),
     ]);
-    await expect(h.tokens.get()).rejects.toMatchObject({
+    await expect(h.client.authenticate()).rejects.toMatchObject({
       code: "AUTHENTICATION_FAILED",
       httpStatus: status,
     });
@@ -77,9 +78,9 @@ describe("technical-user authentication", () => {
       Response.json({}, { status, headers: { "Retry-After": "2" } }),
       token,
     ]);
-    await h.tokens.get();
-    expect(h.http.retryCount).toBe(1);
-    expect(h.rt.sleep).toHaveBeenCalledWith(2000, h.http.signal);
+    await h.client.authenticate();
+    expect(h.fetcher).toHaveBeenCalledTimes(2);
+    expect(h.rt.sleep).toHaveBeenCalledWith(2000, h.client.signal);
   });
   it("retries network, stops at three", async () => {
     const h = harness([
@@ -87,7 +88,7 @@ describe("technical-user authentication", () => {
       new Error("secret"),
       new Error("secret"),
     ]);
-    await expect(h.tokens.get()).rejects.toMatchObject({
+    await expect(h.client.authenticate()).rejects.toMatchObject({
       code: "REQUEST_FAILED",
     });
     expect(h.fetcher).toHaveBeenCalledTimes(3);
@@ -96,85 +97,57 @@ describe("technical-user authentication", () => {
     const h = harness(
       Array.from({ length: 3 }, () => Response.json({}, { status: 503 })),
     );
-    await expect(h.tokens.get()).rejects.toMatchObject({
+    await expect(h.client.authenticate()).rejects.toMatchObject({
       code: "TOKEN_REQUEST_FAILED",
     });
   });
-});
-it("parses Retry-After seconds/date and invalid values", () => {
-  expect(retryAfter("3")).toBe(3000);
-  expect(retryAfter("Thu, 01 Jan 1970 00:00:02 GMT", 0)).toBe(2000);
-  expect(retryAfter("bad")).toBe(0);
-  expect(retryAfter(null)).toBe(0);
-});
-it("rejects malformed, oversized, and non-object successful bodies", async () => {
-  for (const body of ["bad", "null", '"text"', "x".repeat(262145)]) {
-    const h = harness([new Response(body)]);
-    await expect(
-      h.http.once("https://example.invalid", {}),
-    ).rejects.toMatchObject({ code: "INVALID_API_RESPONSE" });
-  }
-});
-it("does not expose non-JSON error response", async () => {
-  const h = harness([new Response("secret", { status: 400 })]);
-  expect((await h.http.once("https://example.invalid", {})).body).toEqual({});
 });
 it("honors cancellation before network", async () => {
   const h = harness([]);
   const a = new AbortController();
   a.abort();
-  const http = new Http(h.rt, a.signal);
-  await expect(http.once("https://example.invalid", {})).rejects.toThrow();
+  const client = new DeployClient(h.rt, a.signal, inputs(), h.safe);
+  await expect(client.authenticate()).rejects.toThrow();
   expect(h.fetcher).not.toHaveBeenCalled();
 });
-it("production runtime delegates fetch, monotonic clock, and abortable timers", async () => {
-  const { runtime } = await import("../src/http.js");
-  const mocked = vi
-    .spyOn(globalThis, "fetch")
-    .mockResolvedValue(Response.json({}));
+it("production runtime uses a monotonic clock and abortable timers", async () => {
+  const { runtime } = await import("../src/runtime.js");
   expect(runtime.now()).toBeGreaterThanOrEqual(0);
-  await runtime.fetch("https://example.invalid");
-  expect(mocked).toHaveBeenCalledOnce();
   await runtime.sleep(1, new AbortController().signal);
-  mocked.mockRestore();
 });
-it("handles bodyless errors and non-object error JSON", async () => {
-  for (const r of [
-    new Response(null, { status: 403 }),
-    Response.json(null, { status: 400 }),
-  ]) {
-    const h = harness([r]);
-    expect((await h.http.once("https://example.invalid", {})).body).toEqual({});
-  }
-});
-it("times out a pending request after 30 seconds without exposing transport errors", async () => {
-  vi.useFakeTimers({ toFake: ["setTimeout"] });
-  try {
-    const h = harness([]);
-    const timeout = vi
-      .spyOn(AbortSignal, "timeout")
-      .mockImplementation((ms) => {
-        const a = new AbortController();
-        setTimeout(() => a.abort(), ms);
-        return a.signal;
+it.each(["create", "decide", "cancel", "traffic"] as const)(
+  "%s never retries a request timeout",
+  async (op) => {
+    vi.useFakeTimers({ toFake: ["setTimeout"] });
+    try {
+      const h = harness([token, ...(op === "cancel" ? [{}] : [])]);
+      await h.client.authenticate();
+      const original = h.rt.fetch;
+      h.rt.fetch = vi.fn((url, init) =>
+        String(url).endsWith("/cancellationoptions")
+          ? original(url, init)
+          : new Promise<Response>((_resolve, reject) =>
+              init!.signal!.addEventListener("abort", () =>
+                reject(Error("FAKE_TRANSPORT_SECRET")),
+              ),
+            ),
+      );
+      const pending =
+        op === "create"
+          ? h.api.create()
+          : op === "decide"
+            ? h.api.decide("synthetic-deploy", "ACCEPT")
+            : op === "cancel"
+              ? h.api.cancel("synthetic-deploy")
+              : h.api.updateTraffic("synthetic-deploy", {});
+      const assertion = expect(pending).rejects.toMatchObject({
+        code: expect.stringMatching(/AMBIGUOUS$/),
       });
-    h.rt.fetch = vi.fn(
-      (_url, init) =>
-        new Promise<Response>((_resolve, reject) =>
-          init!.signal!.addEventListener("abort", () =>
-            reject(Error("FAKE_TRANSPORT_SECRET")),
-          ),
-        ),
-    );
-    const pending = h.http.once("https://example.invalid", {});
-    const assertion = expect(pending).rejects.toMatchObject({
-      code: "REQUEST_FAILED",
-      message: "The API request could not be completed.",
-    });
-    await vi.advanceTimersByTimeAsync(30000);
-    await assertion;
-    timeout.mockRestore();
-  } finally {
-    vi.useRealTimers();
-  }
-});
+      await vi.advanceTimersByTimeAsync(30000);
+      await assertion;
+      expect(h.rt.fetch).toHaveBeenCalledTimes(op === "cancel" ? 2 : 1);
+    } finally {
+      vi.useRealTimers();
+    }
+  },
+);

@@ -5,8 +5,7 @@ import {
   type Decision,
   type TrafficSplitRequest,
 } from "./inputs.js";
-import { Http } from "./http.js";
-import type { TokenManager } from "./auth.js";
+import { DeployClient, transportError } from "./client.js";
 export function object(v: unknown): Record<string, unknown> {
   if (!v || typeof v !== "object" || Array.isArray(v)) throw invalidResponse();
   return v as Record<string, unknown>;
@@ -39,8 +38,7 @@ export class DeploymentApi {
   pollCount = 0;
   constructor(
     private input: Inputs,
-    private http: Http,
-    private tokens: TokenManager,
+    private client: DeployClient,
   ) {}
   path(id: string, tail = "") {
     return `deployments/${segment(id)}${tail ? "/" + tail : ""}`;
@@ -52,67 +50,72 @@ export class DeploymentApi {
     expected = [200],
     label = "DEPLOYMENT_PROGRESS",
   ): Promise<unknown> {
-    const url = new URL(
-      `v2/subscriptions/${segment(this.input.subscriptionCode)}/${path}`,
-      this.input.apiBaseUrl,
-    );
-    for (let attempt = 0; ; attempt++) {
-      const token = await this.tokens.get(attempt === 1);
-      const init: RequestInit = {
-        method,
-        headers: {
-          Accept: "application/json",
-          "x-approuter-authorization": `Bearer ${token}`,
-          ...(body === undefined ? {} : { "Content-Type": "application/json" }),
-        },
-        ...(body === undefined ? {} : { body: JSON.stringify(body) }),
-      };
-      const counted = new Http(
+    const policy = method === "GET" ? "safe-read" : "unsafe-mutation";
+    let reply;
+    try {
+      reply = await this.client.request(
+        `v2/subscriptions/${segment(this.input.subscriptionCode)}/${path}`,
         {
-          ...this.http.rt,
-          fetch: ((...args: Parameters<typeof fetch>) => {
-            if (path.endsWith("/progress")) this.pollCount++;
-            return this.http.rt.fetch(...args);
-          }) as typeof fetch,
+          policy,
+          method,
+          headers: {
+            Accept: "application/json",
+            ...(body === undefined
+              ? {}
+              : { "Content-Type": "application/json" }),
+          },
+          ...(body === undefined ? {} : { body: JSON.stringify(body) }),
         },
-        this.http.signal,
       );
-      let reply;
-      try {
-        reply = await (method === "GET"
-          ? counted.safeRequest(url.href, init)
-          : counted.once(url.href, init));
-      } catch (error) {
-        if (method !== "GET" && !this.http.signal.aborted)
-          throw new ActionError(
-            label + "_AMBIGUOUS",
-            "The mutation may have succeeded. Inspect Cloud Portal before retrying.",
-          );
-        throw error;
-      }
-      if (reply.status === 401 && attempt === 0) continue;
-      if (!expected.includes(reply.status)) {
-        let errorCode = label + "_FAILED";
-        if (method !== "GET" && (reply.status === 429 || reply.status >= 500))
-          errorCode = label + "_AMBIGUOUS";
-        if (
-          path.endsWith("/cancellationoptions") &&
-          [404, 501].includes(reply.status)
-        )
-          errorCode =
-            reply.status === 404
-              ? "DEPLOYMENT_CANCELLATION_UNAVAILABLE"
-              : "DEPLOYMENT_CANCELLATION_DISABLED";
-        // Never echo provider text: it can contain unknown infrastructure credentials.
+    } catch (error) {
+      if (error instanceof ActionError) throw error;
+      this.client.signal.throwIfAborted();
+      if (policy === "unsafe-mutation")
         throw new ActionError(
-          errorCode,
-          `CCv2 request failed (HTTP ${reply.status}).`,
-          reply.status,
+          label + "_AMBIGUOUS",
+          "The mutation may have succeeded. Inspect Cloud Portal before retrying.",
         );
-      }
-      return reply.body;
+      throw transportError(error);
     }
+    if (!expected.includes(reply.status)) {
+      let errorCode = label + "_FAILED";
+      if (
+        policy === "unsafe-mutation" &&
+        (reply.status === 429 ||
+          reply.status >= 500 ||
+          (reply.status >= 200 && reply.status < 300))
+      )
+        errorCode = label + "_AMBIGUOUS";
+      if (
+        path.endsWith("/cancellationoptions") &&
+        [404, 501].includes(reply.status)
+      )
+        errorCode =
+          reply.status === 404
+            ? "DEPLOYMENT_CANCELLATION_UNAVAILABLE"
+            : "DEPLOYMENT_CANCELLATION_DISABLED";
+      // Deliberately suppress shared problem title/detail, even when sanitized.
+      throw new ActionError(
+        errorCode,
+        `CCv2 request failed (HTTP ${reply.status}).`,
+        reply.status,
+      );
+    }
+    if (reply.body.kind === "json") return reply.body.value;
+    if (
+      reply.body.kind === "empty" &&
+      path.endsWith("/cancellation") &&
+      reply.status === 202
+    )
+      return {};
+    if (policy === "unsafe-mutation")
+      throw new ActionError(
+        label + "_AMBIGUOUS",
+        "The mutation response was invalid. Inspect Cloud Portal before retrying.",
+      );
+    throw invalidResponse();
   }
+
   async modes() {
     const b = await this.request(
       "deploymentmodes",
