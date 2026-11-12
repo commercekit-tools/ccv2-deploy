@@ -4,6 +4,10 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    ignore:
+      # Keep typings aligned with the node24 Action runtime.
+      - dependency-name: "@types/node"
+        versions: [">=25"]
     groups:
       development:
         dependency-type: development
