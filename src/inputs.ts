@@ -1,3 +1,8 @@
+import {
+  validateTechnicalUserTokenEndpoint,
+  validateManagementApiBaseUrl,
+  type TechnicalUserCredentials,
+} from "@commercekit-tools/ccv2-client";
 import { ActionError } from "./errors.js";
 import type { Sanitizer } from "./security.js";
 export const controls = /[\u0000-\u001f\u007f-\u009f]/;
@@ -15,21 +20,12 @@ export function textInput(
     throw new ActionError("INVALID_INPUT", `Invalid ${name} input.`);
   return value;
 }
-export function httpsUrl(value: string): URL {
+export function httpsUrl(
+  value: string,
+  validate = validateTechnicalUserTokenEndpoint,
+): URL {
   try {
-    if (value.length > 2048 || controls.test(value) || /[\s\\?#]/.test(value))
-      throw Error();
-    const u = new URL(value);
-    if (
-      u.protocol !== "https:" ||
-      !u.hostname ||
-      u.username ||
-      u.password ||
-      u.hash ||
-      u.search
-    )
-      throw Error();
-    return u;
+    return validate(value);
   } catch {
     throw new ActionError(
       "INVALID_INPUT",
@@ -49,11 +45,7 @@ export interface TrafficSplitRequest {
   endpoints?: { code: string; percentage: number }[];
   services?: { code: string; percentage: number }[];
 }
-export interface Inputs {
-  tokenEndpoint: string;
-  clientId: string;
-  clientSecret: string;
-  resource: string;
+export interface Inputs extends TechnicalUserCredentials {
   subscriptionCode: string;
   operation: Operation;
   deploymentCode?: string;
@@ -235,10 +227,10 @@ export function readInputs(
     ...(split ? { trafficSplit: trafficSplit(split) } : {}),
     rollbackDatabase,
     ...(cancelReason ? { cancelReason } : {}),
-    apiBaseUrl:
-      httpsUrl(
-        get("api-base-url") || "https://portalapi.commerce.ondemand.com",
-      ).href.replace(/\/+$/, "") + "/",
+    apiBaseUrl: httpsUrl(
+      get("api-base-url") || "https://portalapi.commerce.ondemand.com",
+      validateManagementApiBaseUrl,
+    ).href,
     pollIntervalMs: integer("poll-interval-seconds", "60", 10, 600) * 1000,
     timeoutMs: integer("timeout-minutes", "240", 1, 1440) * 60000,
   };

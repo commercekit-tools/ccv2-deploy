@@ -1,3 +1,9 @@
+import { redactTransportText } from "@commercekit-tools/ccv2-client";
+import {
+  sanitizeBoundedText,
+  sanitizeErrorMessage,
+  redactKnownSecrets,
+} from "@commercekit-tools/notification-contract";
 export class Sanitizer {
   private secrets = new Set<string>();
   constructor(private mask: (value: string) => void) {}
@@ -5,24 +11,24 @@ export class Sanitizer {
     if (!value) return;
     this.mask(value);
     this.secrets.add(value);
-    this.secrets.add(encodeURIComponent(value));
-    this.secrets.add(new URLSearchParams({ v: value }).toString().slice(2));
   }
   text(value: string, max = 1000): string {
-    let text = value;
-    for (const secret of [...this.secrets].sort((a, b) => b.length - a.length))
-      text = text.split(secret).join("[REDACTED]");
-    return plainText(text)
-      .replace(/https?:\/\/\S+/gi, "[URL]")
-      .replace(/Bearer\s+\S+/gi, "[REDACTED]")
-      .replace(/eyJ[\w-]+\.[\w-]+\.[\w-]+/g, "[REDACTED]")
-      .replace(/[\u0000-\u001f\u007f-\u009f]/g, " ")
-      .split(/\s+at\s+\S+\s*\(/)[0]!
-      .slice(0, max)
-      .trim();
+    // Keep Deploy's plain-text/URL/JWT disclosure policy atop shared redaction.
+    const text = plainText(
+      redactTransportText(value, [...this.secrets]),
+    ).replace(/eyJ[\w-]+\.[\w-]+\.[\w-]+/g, "[REDACTED]");
+    return text.trim()
+      ? sanitizeBoundedText(
+          sanitizeErrorMessage(text, [...this.secrets]),
+          max,
+        ).trim()
+      : "";
+  }
+  error(value: string): string {
+    return this.text(value) || sanitizeErrorMessage("");
   }
   contains(value: string): boolean {
-    return [...this.secrets].some((s) => value.includes(s));
+    return redactKnownSecrets(value, [...this.secrets]) !== value;
   }
 }
 export const escapeHtml = (value: string) =>

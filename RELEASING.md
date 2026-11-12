@@ -26,3 +26,5 @@ No tags, moving v1, GitHub Release, npm publishing, or Marketplace publication u
 20. Owner explicitly authorizes coordinated release.
 
 Merging an implementation is not release authorization.
+
+The current shared dependencies are exactly `@commercekit-tools/notification-contract@0.0.2` and `@commercekit-tools/ccv2-client@0.0.2`. These package versions being published does not release this Action. Any package upgrade requires complete deployment regression tests, all ten guarded Sandbox scenarios (including canary traffic split), and coordinated build → deploy → notify validation again. Rebuild and verify committed dist and license notices. Workflow consumers require no package configuration because dependencies are bundled. Maintainers/CI need GitHub Packages read access for installation.

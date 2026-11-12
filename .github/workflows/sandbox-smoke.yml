@@ -24,6 +24,7 @@ on:
         description: Type RUN-COMMERCEKIT-SANDBOX-DEPLOY
 permissions:
   contents: read
+  packages: read
 concurrency:
   group: ccv2-deploy-sandbox-smoke
   cancel-in-progress: false
@@ -36,8 +37,12 @@ jobs:
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version-file: .node-version
+          registry-url: https://npm.pkg.github.com
+          scope: "@commercekit-tools"
       - run: corepack enable
       - run: pnpm install --frozen-lockfile
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - id: prepare
         run: node scripts/sandbox/prepare.mjs
         env:

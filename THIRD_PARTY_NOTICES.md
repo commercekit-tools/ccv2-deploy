@@ -1,7 +1,11 @@
 # Third-party notices
 
-This Action is MIT licensed. Authentication, transport, security and notification conventions were adapted from the public MIT-licensed CommerceKit CCv2 Build Action implementation. Copyright (c) 2026 CommerceKit. See LICENSE.
+This Action is MIT licensed. Deployment conventions were adapted from the public MIT-licensed CommerceKit CCv2 Build Action implementation. Copyright (c) 2026 CommerceKit. See LICENSE.
 
-The exact NotificationEvent v1 schema and its MIT license are in contracts with commit and hash provenance. SAP documentation is production authority but its authored OpenAPI is not redistributed. Tests use hand-authored models and independently authored CommerceKit Sandbox compatibility evidence.
+Runtime dependencies are pinned exactly:
 
-Runtime dependencies: @actions/core (MIT) supplies runner output/masking/summary APIs; Ajv and ajv-formats (MIT) validate the local NotificationEvent schema. Development tools provide TypeScript, linting, formatting, Vitest coverage, and ncc bundling. All direct dependencies are pinned. dist/licenses.txt contains the bundled dependency license inventory.
+- `@actions/core@3.0.1` (MIT): runner outputs, masking and summary APIs.
+- `@commercekit-tools/ccv2-client@0.0.2` (MIT): framework-independent technical-user authentication and CCv2 transport.
+- `@commercekit-tools/notification-contract@0.0.2` (MIT): NotificationEvent v1 schema, types, factories, validation, context/link safety and sanitization. Ajv and ajv-formats are transitive package dependencies; there is no separate schema copy or direct Ajv dependency here.
+
+Published packages include their licenses. `dist/licenses.txt` contains the bundled dependency license inventory. Development tools provide TypeScript, linting, formatting, Vitest coverage and ncc bundling. SAP documentation is production authority but its authored OpenAPI is not redistributed. Tests use hand-authored models and independently authored CommerceKit Sandbox compatibility evidence.

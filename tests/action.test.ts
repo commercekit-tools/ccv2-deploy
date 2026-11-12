@@ -1,8 +1,11 @@
+import { validateNotificationEvent } from "@commercekit-tools/notification-contract";
+const validateEvent = (value: unknown) =>
+  Boolean(validateNotificationEvent(value));
 import { it, expect, vi } from "vitest";
 import { run, type Core } from "../src/action.js";
 import { raw } from "./fixtures.js";
 import { harness, token } from "./harness.js";
-import { validateEvent, context, event } from "../src/notification.js";
+import { context, event } from "../src/notification.js";
 import { Sanitizer } from "../src/security.js";
 import { initialResult } from "../src/result.js";
 export function fakeCore(overrides: Record<string, string> = {}) {
@@ -13,6 +16,7 @@ export function fakeCore(overrides: Record<string, string> = {}) {
     getInput: vi.fn((n: string) => overrides[n] ?? raw[n] ?? ""),
     setSecret: vi.fn(),
     setOutput: vi.fn((k: string, v: string) => {
+      if (k === "notification-event") validateNotificationEvent(JSON.parse(v));
       calls.push(k);
       outputs[k] = v;
     }),

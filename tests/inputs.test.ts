@@ -95,3 +95,17 @@ it.each([
   const safe = new Sanitizer(() => {});
   expect(safe.text(value)).not.toMatch(/[<>]/);
 });
+
+it("uses the shared management URL validator and retains Action input errors", () => {
+  const read = (url: string) =>
+    readInputs(
+      (n) => (n === "api-base-url" ? url : (raw[n] ?? "")),
+      new Sanitizer(() => {}),
+    );
+  expect(read("https://api.example.invalid/base///").apiBaseUrl).toBe(
+    "https://api.example.invalid/base/",
+  );
+  expect(() => read("http://api.example.invalid")).toThrow(
+    expect.objectContaining({ code: "INVALID_INPUT" }),
+  );
+});

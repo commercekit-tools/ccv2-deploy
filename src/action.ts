@@ -2,8 +2,8 @@ import type * as core from "@actions/core";
 import { readInputs } from "./inputs.js";
 import { Sanitizer, escapeHtml } from "./security.js";
 import { ActionError, waitTimeout } from "./errors.js";
-import { Http, runtime, type Runtime } from "./http.js";
-import { TokenManager } from "./auth.js";
+import { runtime, type Runtime } from "./runtime.js";
+import { DeployClient } from "./client.js";
 import { DeploymentApi, decisionPoint } from "./api.js";
 import { initialResult, type Result } from "./result.js";
 import { event } from "./notification.js";
@@ -21,7 +21,6 @@ export async function run(
   const safe = new Sanitizer((v) => core.setSecret(v));
   let result = initialResult();
   let timer: ReturnType<typeof setTimeout> | undefined;
-  let http: Http | undefined;
   let api: DeploymentApi | undefined;
   let activeSignal: AbortSignal | undefined;
   try {
@@ -49,11 +48,12 @@ export async function run(
       signal.throwIfAborted();
       if (rt.now() >= deadline) throw waitTimeout();
     };
-    http = new Http(rt, signal);
-    const tokens = new TokenManager(input, http, safe);
-    api = new DeploymentApi(input, http, tokens);
+    const client = new DeployClient(rt, signal, input, safe, () => {
+      api!.pollCount++;
+    });
+    api = new DeploymentApi(input, client);
     core.info("Authenticating with the CCv2 technical user.");
-    await tokens.get();
+    await client.authenticate();
     check();
     if (input.operation === "deploy") {
       if (input.validateDeploymentModes) {

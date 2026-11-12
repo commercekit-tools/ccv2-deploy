@@ -1,7 +1,5 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
-import { Ajv2020 } from "ajv/dist/2020.js";
-import formats from "ajv-formats";
+import { validateNotificationEvent } from "@commercekit-tools/notification-contract";
 import * as core from "@actions/core";
 import { credentials, request, scenarios } from "./common.mjs";
 try {
@@ -24,16 +22,7 @@ try {
   }
   const result = JSON.parse(raw);
   const event = JSON.parse(rawEvent);
-  const ajv = new Ajv2020({ strict: false });
-  formats(ajv);
-  assert(
-    ajv.validate(
-      JSON.parse(
-        readFileSync("contracts/notification-event-v1.schema.json", "utf8"),
-      ),
-      event,
-    ),
-  );
+  validateNotificationEvent(event);
   const expected = {
     "rolling-success": "success",
     "rolling-failure": "failure",
