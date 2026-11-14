@@ -1,27 +1,40 @@
 import { it, expect } from "vitest";
 import { spawnSync } from "node:child_process";
-import { mkdtempSync, readFileSync, writeFileSync, rmSync } from "node:fs";
+import {
+  mkdtempSync,
+  readFileSync,
+  writeFileSync,
+  rmSync,
+  copyFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
-import { join, resolve } from "node:path";
-it("executes bundled Action with synthetic fetch and GitHub output files", () => {
+import { join } from "node:path";
+it("executes the standalone bundle without package installation or registry credentials", () => {
   const dir = mkdtempSync(join(tmpdir(), "ccv2-test-"));
   try {
     const preload = join(dir, "fetch.cjs");
     writeFileSync(
       preload,
-      `global.fetch=async (url,init)=>{url=String(url);if(init.redirect!=='error')throw Error('redirect policy');if(url.includes('oauth2'))return Response.json({access_token:'FAKE_BUNDLE_TOKEN',token_type:'Bearer'});if(init.method==='POST')return Response.json({code:'synthetic.1'},{status:201});if(url.endsWith('/progress'))return Response.json({deploymentStatus:'DEPLOYED',percentage:100});return Response.json({code:'synthetic.1'});};`,
+      `global.fetch=async (url,init)=>{url=String(url);if(!['https://auth.example.invalid','https://portalapi.commerce.ondemand.com'].includes(new URL(url).origin))throw Error('Unexpected network destination');if(init.redirect!=='error')throw Error('redirect policy');if(url.includes('oauth2'))return Response.json({access_token:'FAKE_BUNDLE_TOKEN',token_type:'Bearer'});if(init.method==='POST')return Response.json({code:'synthetic.1'},{status:201});if(url.endsWith('/progress'))return Response.json({deploymentStatus:'DEPLOYED',percentage:100});return Response.json({code:'synthetic.1'});};`,
     );
     const out = join(dir, "outputs"),
       summary = join(dir, "summary");
     writeFileSync(out, "");
     writeFileSync(summary, "");
+    copyFileSync("dist/index.js", join(dir, "index.js"));
+    copyFileSync("dist/package.json", join(dir, "package.json"));
     const result = spawnSync(
       process.execPath,
-      ["--require", preload, resolve("dist/index.js")],
+      ["--require", preload, join(dir, "index.js")],
       {
         encoding: "utf8",
+        cwd: dir,
         env: {
           ...process.env,
+          NODE_AUTH_TOKEN: "",
+          GITHUB_TOKEN: "",
+          GH_TOKEN: "",
+          NODE_PATH: "",
           INPUT_TOKEN_ENDPOINT: "",
           "INPUT_TOKEN-ENDPOINT": "https://auth.example.invalid/oauth2/token",
           "INPUT_CLIENT-ID": "FAKE_BUNDLE_CLIENT",
