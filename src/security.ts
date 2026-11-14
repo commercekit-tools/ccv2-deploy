@@ -1,6 +1,8 @@
 import { redactTransportText } from "@commercekit-tools/ccv2-client";
 import {
   sanitizeBoundedText,
+  stripAngleBracketText,
+  redactJwtLikeTokens,
   sanitizeErrorMessage,
   redactKnownSecrets,
 } from "@commercekit-tools/notification-contract";
@@ -14,9 +16,9 @@ export class Sanitizer {
   }
   text(value: string, max = 1000): string {
     // Keep Deploy's plain-text/URL/JWT disclosure policy atop shared redaction.
-    const text = plainText(
-      redactTransportText(value, [...this.secrets]),
-    ).replace(/eyJ[\w-]+\.[\w-]+\.[\w-]+/g, "[REDACTED]");
+    const text = redactJwtLikeTokens(
+      stripAngleBracketText(redactTransportText(value, [...this.secrets])),
+    );
     return text.trim()
       ? sanitizeBoundedText(
           sanitizeErrorMessage(text, [...this.secrets]),
@@ -39,16 +41,3 @@ export const escapeHtml = (value: string) =>
         c
       ]!,
   );
-
-// A conservative text filter: discard tag contents, including unclosed tags.
-// Every angle bracket is consumed, so nested/malformed markup cannot reappear.
-function plainText(value: string): string {
-  let inside = false;
-  let output = "";
-  for (const character of value) {
-    if (character === "<") inside = true;
-    else if (character === ">") inside = false;
-    else if (!inside) output += character;
-  }
-  return output;
-}

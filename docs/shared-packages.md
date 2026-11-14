@@ -1,6 +1,6 @@
 # Shared package ownership
 
-Both packages are published GitHub Packages dependencies pinned exactly to **0.0.2**. No local checkout, workspace link, runtime registry request, or package publishing step is used. The Action remains **UNRELEASED**.
+Both packages are published GitHub Packages dependencies pinned exactly to **0.0.3**. No local checkout, workspace link, runtime registry request, or package publishing step is used. The Action remains **UNRELEASED**.
 
 | Area                                                                          | Classification               | Ownership after migration                                                                                                         |
 | ----------------------------------------------------------------------------- | ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
@@ -35,8 +35,14 @@ Dependencies are bundled into `dist/index.js` with notices in `dist/licenses.txt
 
 ## Remaining adapters
 
-The package owns the GitHub environment allowlist; Deploy filters values as the package reads them to reject registered secrets and controls without enumerating the environment. Input credential types and result event-status/error types come from the packages. Base URLs are validated once by the appropriate shared validator. Shared sanitizers own secret encodings, bearer/header redaction, URL removal, text bounds and stack removal. Deploy retains HTML/JWT filtering and summary escaping because neither pinned package exports those protections.
+The package owns the GitHub environment allowlist; Deploy filters values as the package reads them to reject registered secrets and controls without enumerating the environment. Input credential types and result event-status/error types come from the packages. Base URLs are validated once by the appropriate shared validator. Shared sanitizers own secret encodings, bearer/header redaction, URL removal, text bounds and stack removal. The package now supplies markup/JWT filtering primitives; Deploy retains their ordering and its local summary escaping.
 
 Sandbox prerequisite OAuth, Management requests and polling sleep also use `ccv2-client`. The separate control API helper remains local: its run/scenario/cleanup operations use a control token with ordinary `Authorization`, not technical-user `x-approuter-authorization`. All ten scenarios, fixed origin, confirmation and always-run cleanup remain unchanged.
 
 Lint rules prevent direct fetch in Action modules and Sandbox preparation, and direct Ajv imports in contract consumers. This keeps new transport and schema validation work routed through the shared packages. Small local adapters still translate transport errors into stable Deploy errors, count progress requests and enforce endpoint DTOs and unsafe-mutation policy.
+
+## Shared primitives in 0.0.3
+
+CCv2 path-segment validation/encoding now delegates to `encodeCcv2PathSegment`. The Action keeps input diagnostics and translates `INVALID_PATH_ENCODING` to its existing malformed-Unicode failure classification. Markup filtering and JWT-shaped token redaction delegate to `stripAngleBracketText` and `redactJwtLikeTokens` at their original positions in the sanitization pipeline. The new JWT scanner removes the copied regex's quadratic behavior on repeated prefixes. No provider rendering, masking registration, HTML summary escaping, endpoint validation or lifecycle logic moves into the package.
+
+The frozen integration corpus compares 25 text cases and 29 identifier cases with the pre-extraction Action. It includes the long-markup/truncation behavior that differs between Build and Deploy. Action metadata and existing notification-event fixtures remain unchanged.

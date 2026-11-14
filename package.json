@@ -25,8 +25,8 @@
   },
   "dependencies": {
     "@actions/core": "3.0.1",
-    "@commercekit-tools/ccv2-client": "0.0.2",
-    "@commercekit-tools/notification-contract": "0.0.2"
+    "@commercekit-tools/ccv2-client": "0.0.3",
+    "@commercekit-tools/notification-contract": "0.0.3"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

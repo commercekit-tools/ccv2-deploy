@@ -146,6 +146,6 @@ See [API contract](docs/api-contract.md), [Sandbox](docs/sandbox.md), [security]
 
 ## Shared packages
 
-Exact runtime pins are `@commercekit-tools/notification-contract@0.0.2` and `@commercekit-tools/ccv2-client@0.0.2`. The former owns NotificationEvent v1 types, deployment event creation, validation, context, links, and event text sanitization. The latter provides framework-independent technical-user OAuth and CCv2 HTTP transport, including token refresh, URL validation, timeouts, redaction, and safe-read/unsafe-mutation policies.
+Exact runtime pins are `@commercekit-tools/notification-contract@0.0.3` and `@commercekit-tools/ccv2-client@0.0.3`. The former owns NotificationEvent v1 types, deployment event creation, validation, context, links, and event text sanitization. The latter provides framework-independent technical-user OAuth and CCv2 HTTP transport, including token refresh, URL validation, timeouts, redaction, and safe-read/unsafe-mutation policies.
 
 Deploy retains inputs, endpoint DTO validation, mode preflight, the deployment lifecycle, green decisions, traffic split, cancellation, results, outputs, and summaries. Both packages are bundled into `dist`; workflow users need no registry configuration or package credentials. Maintainers and CI need GitHub Packages read access. Package upgrades require the full deployment regression suite and guarded Sandbox verification before release. See the [ownership inventory](docs/shared-packages.md). The Action remains **UNRELEASED**.

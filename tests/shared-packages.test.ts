@@ -24,8 +24,8 @@ it("pins published packages without local schema or authentication copies", () =
     "@commercekit-tools/notification-contract",
     "@commercekit-tools/ccv2-client",
   ]) {
-    expect(p.dependencies[name]).toBe("0.0.2");
-    expect(require(name + "/package.json").version).toBe("0.0.2");
+    expect(p.dependencies[name]).toBe("0.0.3");
+    expect(require(name + "/package.json").version).toBe("0.0.3");
   }
   expect(
     require("@commercekit-tools/notification-contract/schema").properties
