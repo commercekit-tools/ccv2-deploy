@@ -173,11 +173,11 @@ importers:
         specifier: 3.0.1
         version: 3.0.1
       '@commercekit-tools/ccv2-client':
-        specifier: 0.0.2
-        version: 0.0.2
+        specifier: 0.0.3
+        version: 0.0.3
       '@commercekit-tools/notification-contract':
-        specifier: 0.0.2
-        version: 0.0.2
+        specifier: 0.0.3
+        version: 0.0.3
     devDependencies:
       '@eslint/js':
         specifier: 10.0.1
@@ -251,12 +251,12 @@ packages:
   '@cacheable/utils@2.5.0':
     resolution: {integrity: sha512-buipgOVDkkPXNR5+xBpDw7Zk2n1EvU7qBJCNUcL7rhQ//kfpOXPAvQ511Os0vpLYJ1pZnvudNytkQt2hst3wqA==}
 
-  '@commercekit-tools/ccv2-client@0.0.2':
-    resolution: {integrity: sha512-0w77w4VALcXk6nEuaog4jIlNGAnJebOf8Z+pL8FDrW3FSE/qWKTw3R+Ad1ssrrXQs7NV0RM90MuyZ1BRnUS3Gw==, tarball: https://npm.pkg.github.com/download/@commercekit-tools/ccv2-client/0.0.2/99617e9f87c25f7e992b411f932f2daacf6075d3}
+  '@commercekit-tools/ccv2-client@0.0.3':
+    resolution: {integrity: sha512-AkGkMm0KPWsvq34/EHYIYQBgnNfS7eXby3O5z5Gpw6sLTGaoLQReA65UubYsEE+3KKg7dwLtRNknuZfhKDa4Wg==, tarball: https://npm.pkg.github.com/download/@commercekit-tools/ccv2-client/0.0.3/897df8bd5b1dce9a5f3b33ee6f98913b8f7c2ee8}
     engines: {node: '>=24.21.0'}
 
-  '@commercekit-tools/notification-contract@0.0.2':
-    resolution: {integrity: sha512-HEUVmkqvPdFO5TxZS6urpPx4GLzlSCDwtyz+F2NaRZBzhJ/MN0z99NGqOnJbQYmRmdor79ZaDgjigqcrga8AMQ==, tarball: https://npm.pkg.github.com/download/@commercekit-tools/notification-contract/0.0.2/2db751f8ea2f55220b4a0030e3f845632e93645c}
+  '@commercekit-tools/notification-contract@0.0.3':
+    resolution: {integrity: sha512-+TPMHceFbOTxFetmIfBa7s4y+JrBW+0ZpgnOHce7n6vldeRF2sVeNuDa/9jTYmh1q2R1oNSFiOLAIC6ODUIAQg==, tarball: https://npm.pkg.github.com/download/@commercekit-tools/notification-contract/0.0.3/10e37c57e0325438702d5c93df5563696f056210}
     engines: {node: '>=24.21.0'}
 
   '@eslint-community/eslint-utils@4.10.1':
@@ -1154,9 +1154,9 @@ snapshots:
       hashery: 1.5.1
       keyv: 5.6.0
 
-  '@commercekit-tools/ccv2-client@0.0.2': {}
+  '@commercekit-tools/ccv2-client@0.0.3': {}
 
-  '@commercekit-tools/notification-contract@0.0.2':
+  '@commercekit-tools/notification-contract@0.0.3':
     dependencies:
       ajv: 8.20.0
       ajv-formats: 3.0.1(ajv@8.20.0)

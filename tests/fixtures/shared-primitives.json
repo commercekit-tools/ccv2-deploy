@@ -1,0 +1,284 @@
+{
+  "text": [
+    {
+      "value": "",
+      "secrets": ["synthetic-secret", "synthetic", "synthetic secret"],
+      "max": 5,
+      "expected": ""
+    },
+    {
+      "value": "ordinary text",
+      "secrets": ["synthetic-secret", "synthetic", "synthetic secret"],
+      "max": 1000,
+      "expected": "ordinary text"
+    },
+    {
+      "value": "a<b>c",
+      "secrets": ["synthetic-secret", "synthetic", "synthetic secret"],
+      "max": 1000,
+      "expected": "ac"
+    },
+    {
+      "value": "<b>bold</b>",
+      "secrets": ["synthetic-secret", "synthetic", "synthetic secret"],
+      "max": 5,
+      "expected": "bold"
+    },
+    {
+      "value": "a<unclosed secret",
+      "secrets": ["synthetic-secret", "synthetic", "synthetic secret"],
+      "max": 1000,
+      "expected": "a"
+    },
+    {
+      "value": "a<<b>c>d",
+      "secrets": ["synthetic-secret", "synthetic", "synthetic secret"],
+      "max": 1000,
+      "expected": "acd"
+    },
+    {
+      "value": "a>b",
+      "secrets": ["synthetic-secret", "synthetic", "synthetic secret"],
+      "max": 5,
+      "expected": "ab"
+    },
+    {
+      "value": "<script>alert(1)</script>",
+      "secrets": ["synthetic-secret", "synthetic", "synthetic secret"],
+      "max": 1000,
+      "expected": "alert(1)"
+    },
+    {
+      "value": "&lt;b&gt;",
+      "secrets": ["synthetic-secret", "synthetic", "synthetic secret"],
+      "max": 1000,
+      "expected": "&lt;b&gt;"
+    },
+    {
+      "value": "eyJheader.payload.signature",
+      "secrets": ["synthetic-secret", "synthetic", "synthetic secret"],
+      "max": 5,
+      "expected": "[REDA"
+    },
+    {
+      "value": "eyJfirst.a.b eyJsecond.c.d",
+      "secrets": ["synthetic-secret", "synthetic", "synthetic secret"],
+      "max": 1000,
+      "expected": "[REDACTED] [REDACTED]"
+    },
+    {
+      "value": "eyJ.a.b",
+      "secrets": ["synthetic-secret", "synthetic", "synthetic secret"],
+      "max": 1000,
+      "expected": "eyJ.a.b"
+    },
+    {
+      "value": "prefixeyJabc.def.ghiSuffix",
+      "secrets": ["synthetic-secret", "synthetic", "synthetic secret"],
+      "max": 5,
+      "expected": "prefi"
+    },
+    {
+      "value": "Bearer eyJheader.payload.signature",
+      "secrets": ["synthetic-secret", "synthetic", "synthetic secret"],
+      "max": 1000,
+      "expected": "[REDACTED]"
+    },
+    {
+      "value": "https://example.invalid/<tag>suffix",
+      "secrets": ["synthetic-secret", "synthetic", "synthetic secret"],
+      "max": 1000,
+      "expected": "[URL]"
+    },
+    {
+      "value": "Authorization: <hidden> value",
+      "secrets": ["synthetic-secret", "synthetic", "synthetic secret"],
+      "max": 5,
+      "expected": "[REDA"
+    },
+    {
+      "value": "token=synthetic-secret&tail",
+      "secrets": ["synthetic-secret", "synthetic", "synthetic secret"],
+      "max": 1000,
+      "expected": "[REDACTED]&tail"
+    },
+    {
+      "value": "synthetic secret synthetic%20secret synthetic+secret",
+      "secrets": ["synthetic-secret", "synthetic", "synthetic secret"],
+      "max": 1000,
+      "expected": "[REDACTED] [REDACTED] [REDACTED]"
+    },
+    {
+      "value": "synthetic-secret synthetic",
+      "secrets": ["synthetic-secret", "synthetic", "synthetic secret"],
+      "max": 5,
+      "expected": "[REDA"
+    },
+    {
+      "value": "a\u0000b\u0085c\n d",
+      "secrets": ["synthetic-secret", "synthetic", "synthetic secret"],
+      "max": 1000,
+      "expected": "a b c  d"
+    },
+    {
+      "value": "message at function(file:1)",
+      "secrets": ["synthetic-secret", "synthetic", "synthetic secret"],
+      "max": 1000,
+      "expected": "message"
+    },
+    {
+      "value": "   ",
+      "secrets": ["synthetic-secret", "synthetic", "synthetic secret"],
+      "max": 5,
+      "expected": ""
+    },
+    {
+      "value": "\ud83d\ude42<tag>text",
+      "secrets": ["synthetic-secret", "synthetic", "synthetic secret"],
+      "max": 1000,
+      "expected": "\ud83d\ude42text"
+    },
+    {
+      "value": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx<tag>",
+      "secrets": ["synthetic-secret", "synthetic", "synthetic secret"],
+      "max": 1000,
+      "expected": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+    },
+    {
+      "value": "<xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx>visible",
+      "secrets": ["synthetic-secret", "synthetic", "synthetic secret"],
+      "max": 5,
+      "expected": ""
+    }
+  ],
+  "paths": [
+    {
+      "value": "build.123",
+      "accepted": true,
+      "encoded": "build.123"
+    },
+    {
+      "value": " leading space ",
+      "accepted": true,
+      "encoded": "%20leading%20space%20"
+    },
+    {
+      "value": "a b",
+      "accepted": true,
+      "encoded": "a%20b"
+    },
+    {
+      "value": "caf\u00e9",
+      "accepted": true,
+      "encoded": "caf%C3%A9"
+    },
+    {
+      "value": "\ud83d\ude42",
+      "accepted": true,
+      "encoded": "%F0%9F%99%82"
+    },
+    {
+      "value": "%2F",
+      "accepted": true,
+      "encoded": "%252F"
+    },
+    {
+      "value": "a%2fb",
+      "accepted": true,
+      "encoded": "a%252fb"
+    },
+    {
+      "value": "a:b",
+      "accepted": true,
+      "encoded": "a%3Ab"
+    },
+    {
+      "value": "a!b",
+      "accepted": true,
+      "encoded": "a!b"
+    },
+    {
+      "value": "a'b",
+      "accepted": true,
+      "encoded": "a'b"
+    },
+    {
+      "value": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "accepted": true,
+      "encoded": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    },
+    {
+      "value": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "accepted": false
+    },
+    {
+      "value": "",
+      "accepted": false
+    },
+    {
+      "value": " ",
+      "accepted": false
+    },
+    {
+      "value": "/",
+      "accepted": false
+    },
+    {
+      "value": "a/b",
+      "accepted": false
+    },
+    {
+      "value": "a?b",
+      "accepted": false
+    },
+    {
+      "value": "a#b",
+      "accepted": false
+    },
+    {
+      "value": "a\\b",
+      "accepted": false
+    },
+    {
+      "value": ".",
+      "accepted": false
+    },
+    {
+      "value": "..",
+      "accepted": false
+    },
+    {
+      "value": "...",
+      "accepted": true,
+      "encoded": "..."
+    },
+    {
+      "value": "x\u0000y",
+      "accepted": false
+    },
+    {
+      "value": "x\u001fy",
+      "accepted": false
+    },
+    {
+      "value": "x\u007fy",
+      "accepted": false
+    },
+    {
+      "value": "x\u0085y",
+      "accepted": false
+    },
+    {
+      "value": "x\u009fy",
+      "accepted": false
+    },
+    {
+      "value": "\ud800",
+      "accepted": false
+    },
+    {
+      "value": "\udc00",
+      "accepted": false
+    }
+  ]
+}

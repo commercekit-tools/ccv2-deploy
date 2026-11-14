@@ -1,6 +1,6 @@
 minimumReleaseAgeExclude:
-  - "@commercekit-tools/ccv2-client@0.0.2"
-  - "@commercekit-tools/notification-contract@0.0.2"
+  - "@commercekit-tools/ccv2-client@0.0.3"
+  - "@commercekit-tools/notification-contract@0.0.3"
 # Development tooling mitigation for GHSA-g3hv-75wg-m249.
 overrides:
   minimatch: 11.0.1

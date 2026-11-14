@@ -1,5 +1,7 @@
 import {
   validateTechnicalUserTokenEndpoint,
+  encodeCcv2PathSegment,
+  Ccv2TransportError,
   validateManagementApiBaseUrl,
   type TechnicalUserCredentials,
 } from "@commercekit-tools/ccv2-client";
@@ -35,9 +37,17 @@ export function httpsUrl(
 }
 export function segment(value: string): string {
   textInput(value, "path identifier", 128);
-  if (/[/?#\\]/.test(value) || value === "." || value === "..")
+  try {
+    return encodeCcv2PathSegment(value);
+  } catch (error) {
+    // Preserve the existing malformed-Unicode failure classification.
+    if (
+      error instanceof Ccv2TransportError &&
+      error.code === "INVALID_PATH_ENCODING"
+    )
+      throw new URIError("URI malformed", { cause: error });
     throw new ActionError("INVALID_INPUT", "Invalid path identifier.");
-  return encodeURIComponent(value);
+  }
 }
 export type Operation = "deploy" | "resume" | "decide" | "cancel";
 export type Decision = "ACCEPT" | "PREPARE_CANARY" | "REJECT";

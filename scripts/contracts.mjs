@@ -12,8 +12,8 @@ for (const name of [
   "@commercekit-tools/notification-contract",
   "@commercekit-tools/ccv2-client",
 ]) {
-  assert.equal(manifest.dependencies[name], "0.0.2");
-  assert.equal(require(`${name}/package.json`).version, "0.0.2");
+  assert.equal(manifest.dependencies[name], "0.0.3");
+  assert.equal(require(`${name}/package.json`).version, "0.0.3");
 }
 assert.equal(schema.properties.schemaVersion.const, 1);
 for (const file of [
