@@ -1,23 +1,33 @@
-# Consistent Action reporting candidate
+# Consistent Action reporting
 
-## Scope and package gate
+## Published dependency and scope
 
-Inspected current main `bb6d1d6a2ac43a5b6e5b6831c78c5cf28bdb95ca`. This change keeps every
-existing input, endpoint, remote mutation, polling/deadline, retry/refresh policy
-and domain outcome in place. It consumes the existing notification-contract
-package for input capture/projection, schema/factories, redaction, status style
-and Markdown summary rendering. No auth, HTTP or provider-delivery subsystem
-was added.
+The owner-authorized [package-only publication run 43678067818](https://github.com/commercekit-tools/action-kit/actions/runs/43678067818)
+published notification-contract **0.0.6** from action-kit main
+`3fecce40414d709884fa48e48eca278f470b20b0`. Main
+[CI 43677942127](https://github.com/commercekit-tools/action-kit/actions/runs/43677942127)
+and [CodeQL 43677942074](https://github.com/commercekit-tools/action-kit/actions/runs/43677942074)
+passed; processed main analysis was `2169851728`.
 
-**BLOCKED — normal registry build/merge readiness:** the new public APIs and
-Build/Deploy optional context fields require unpublished notification-contract
-**0.0.6**. Normal `package.json`, `pnpm-lock.yaml` and `dist` deliberately remain
-on published notification-contract **0.0.3** and ccv2-client **0.0.3**. These are
-baseline artifacts, not a claim that the richer source is bundled/released.
-A source-tarball candidate is tested only in a private isolated consumer; no
-permanent `file:` dependency, source alias or fake registry version is committed.
-After separately authorized publication, verify exact registry provenance,
-repin/rebuild normally and run all required checks before merge or adoption.
+Actual registry metadata was independently read back before consumer changes:
+
+- Exact dependency: `@commercekit-tools/notification-contract@0.0.6`.
+- Shasum: `8030f643d1dd6d741caa2c3c0ba321ad82b30cca`.
+- Integrity: `sha512-n6F84900sDPBeYm5dnf8HLCM9B2DUVATEeF717dqKsSXTJtq1FIj/3hZ2UcNTtXe7v8R90HYF6HIom4auM8Kyw==`.
+- Artifact SHA256: `e4b79576328c2992a96fed087e9ba6e63970e8b54d6fca976a6652702a7a73a9`, identical to the exact reviewed source tarball.
+- ccv2-client remains exact published **0.0.3**.
+
+The normal manifest and registry lockfile pin these actual published packages;
+the committed bundle includes runtime dependencies. No local source checkout,
+file dependency, candidate environment flag, package token or installation is
+required to execute the bundled Action. Development installation uses authorized
+read-only GitHub Packages access.
+
+Input names/defaults, endpoint validation, remote mutations, polling/deadlines,
+retry/refresh policies and domain outcomes remain unchanged. Shared input
+capture/projection, schema/factories, redaction, status styling and Markdown
+summaries come from the existing notification-contract package. OAuth/HTTP
+remain in ccv2-client; delivery remains in Notify. No subsystem was duplicated.
 
 ## Notification and summary behavior
 
@@ -63,7 +73,7 @@ are never restored after sanitization. This prevents masking from manufacturing
 an invalid event or a different domain outcome.
 
 Structured result/event JSON is bounded to **64 KiB**, deliberately raised from
-16 KiB for the unreleased reporting candidate. All 21 invalid deployment settings
+16 KiB for the unreleased reporting enhancement. All 21 invalid deployment settings
 can expand under JSON Unicode escaping even when each projected value is bounded
 to 256 characters. A worst-case malformed-Unicode test verifies a valid event over
 16 KiB remains present, schema-valid and below 64 KiB with all input names.
@@ -78,68 +88,61 @@ while keeping the original domain result/event status. An existing operation
 error remains the primary Action failure. Summary errors warn without erasing
 outputs or changing the operation outcome.
 
-## Validation evidence
+## Registry-backed validation
 
 Status vocabulary: PASS, FAIL, BLOCKED, NOT RUN.
 
-| Check                                                                | Result                                                                                             |
-| -------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
-| Published 0.0.3 baseline frozen installation and full `pnpm quality` | PASS: 279 tests; 98.60% statements, 96.48% branches, 98.48% functions, 99.49% lines                |
-| Input definition parity with `action.yml`                            | Covered by candidate tests: 21 names, confidentiality/presence policy                              |
-| Shared-schema input context and summary/status tests                 | PASS: 312 tests/12 files; 99.12% statements, 97.48% branches, 98.57% functions, 99.76% lines       |
-| Actual standalone bundle status/input/masking/summary matrix         | PASS: 6 new status/input/summary cases plus the existing standalone bundle test, mocked fetch only |
-| Normal new-source registry CI/bundle consistency                     | BLOCKED by unpublished 0.0.6; baseline normal files remain unchanged                               |
-| Real SAP, hosted Sandbox dispatch, live Slack/Teams delivery         | NOT RUN                                                                                            |
+| Check                                                     | Result                                                                                                              |
+| --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| Registry availability and integrity                       | PASS: actual published 0.0.6 independently verified                                                                 |
+| Normal frozen dependency installation                     | PASS: exact registry versions and reproducible lockfile                                                             |
+| Normal standalone bundle generation                       | PASS: SHA256 `540d42a2072000d1ffa884c22a7eac933233a5a584c6831be85a1472d1e7744e`, identical to reviewed v2 candidate |
+| Full normal quality, tests and coverage                   | PASS: 312 tests/12 files, zero skipped; 99.12% statements, 97.48% branches, 98.57% functions, 99.76% lines          |
+| Required hosted checks and coordinated source merge       | NOT RUN: pending final pushed head                                                                                  |
+| Real SAP, hosted Sandbox dispatch, live provider delivery | NOT RUN in this reporting task                                                                                      |
 
-The candidate procedure copies the reviewed source into a separate private
-workspace, verifies and installs an exact source-packed 0.0.6 tarball, builds its
-own bundle, and runs `COMMERCEKIT_CANDIDATE_CONTRACT_VERSION=0.0.6 pnpm quality`.
-`scripts/contracts.mjs` permits that explicit candidate mode only with a private
-manifest, an installed exact 0.0.6 package and a `file:*.tgz` dependency in that
-temporary workspace. The client remains exact registry 0.0.3. Normal mode still
-requires exact published 0.0.3; candidate mode never turns normal CI green.
-
-All existing 95% statement/branch/function/line thresholds and production source
-inclusion remain unchanged. Original fixtures and remote-operation tests remain.
-Synthetic bundle tests run without runtime package installation or registry
-credentials and check zero mock requests for invalid configuration. They do not
-call SAP, create a hosted Sandbox run, or deliver a provider webhook.
-
-## Reviewed candidate package and final commands
-
-Final tested contract source:
-`475cc4db42f79310240496201f90d7047aa54330` in existing action-kit.
-It is an **unpublished source candidate**, not a registry dependency.
-
-This v2 artifact supersedes the earlier candidate after independent privacy
-review. It fixes known-secret percent-escape case variants and canonical
-trailing-dot Slack/Slack Gov webhook hosts. Independent reproductions confirm
-redaction across input snapshots, summary facts and links. New actual producer
-regressions cover mixed-case URL/form-encoded credentials in result, event and
-summary sinks. No API, transport or state-machine code changed for these fixes.
-
-- Tarball: `commercekit-tools-notification-contract-0.0.6.tgz`, 19140 bytes.
-- SHA256: `e4b79576328c2992a96fed087e9ba6e63970e8b54d6fca976a6652702a7a73a9`.
-- Integrity: `sha512-n6F84900sDPBeYm5dnf8HLCM9B2DUVATEeF717dqKsSXTJtq1FIj/3hZ2UcNTtXe7v8R90HYF6HIom4auM8Kyw==`.
-- Candidate Action bundle SHA256: `540d42a2072000d1ffa884c22a7eac933233a5a584c6831be85a1472d1e7744e`.
-
-The final commands actually executed in a fresh private isolated consumer were:
+Normal commands use Node 24.21.0/pnpm 12.6.0 and need no candidate variables:
 
 ```sh
-pnpm install --no-frozen-lockfile
 pnpm install --frozen-lockfile
 pnpm bundle
-COMMERCEKIT_CANDIDATE_CONTRACT_VERSION=0.0.6 pnpm quality
+pnpm quality
 ```
 
-The first command resolves only the temporary source-tarball dependency; the next
-verifies that exact temporary lockfile. All quality steps passed: formatting,
-lint, strict types, schema/compatibility checks, coverage, bundle consistency,
-public scan and production dependency audit (no known vulnerabilities). Source
-`pnpm format:check`, public scan and `git diff --check` also passed. Normal source
-manifests/locks/dist and endpoint/input validation modules have no changes.
+Quality includes format, lint, strict types, public schema/compatibility tests,
+coverage, bundle byte consistency, public scan and production dependency audit.
+All normal commands above passed against the actual registry package, without
+candidate variables. Public scan checked 65 files; the production dependency audit
+reported no known vulnerabilities. Source `git diff --check` passed as well.
+Existing 95% statement/branch/function/line thresholds and production source
+inclusion remain unchanged. Actual standalone bundle cases verify all 21
+input names, status icons/tables, safe error explanations, masking and zero mocked
+API requests for invalid configuration. The original remote-operation suites
+remain in place; passing repository checks is not live SAP validation.
 
-No source was copied from the shared package. No normal install uses the
-candidate tarball. No publication, Git tag, deployment, provider send or real
-SAP request occurred. Registry readiness stays BLOCKED until separately
-approved publication and normal consumer regeneration/validation.
+## Historical source-candidate validation
+
+Before publication the exact reviewed source candidate at action-kit
+`475cc4db42f79310240496201f90d7047aa54330` was validated in fresh private
+consumers. Its 19140-byte tarball has the same integrity and SHA256 recorded
+above. Those candidate results passed **312 tests in 12 files** with
+99.12% statements, 97.48% branches, 98.57% functions, 99.76% lines. Privacy review independently proved lowercase/mixed
+percent-escape redaction and canonical trailing-dot Slack/Slack Gov webhook
+masking across input snapshots, summary facts and links. Producer tests exercise
+mixed-case URL/form-encoded credentials in actual result/event/summary sinks.
+
+The original source-stage procedures, candidate-only switching and complete
+validation evidence are archived at immutable consumer commit
+[`56e037ca68d5adbc53438733020b65a8b4f65b2f`](https://github.com/commercekit-tools/ccv2-deploy/tree/56e037ca68d5adbc53438733020b65a8b4f65b2f)
+([report](https://github.com/commercekit-tools/ccv2-deploy/blob/56e037ca68d5adbc53438733020b65a8b4f65b2f/docs/consistent-reporting.md)).
+They are historical evidence; current scripts assert only exact registry versions
+and reject file dependencies. Candidate compatibility overrides were removed.
+
+## Remaining release and validation gates
+
+The dependency-publication gate is resolved. Normal validation and hosted checks
+on the final source head must pass before the authorized source merge; they
+cannot be replaced by candidate results or weakened checks. Action publication,
+Marketplace/version tags, hosted provider smoke, coordinated live validation and
+owner release approval remain separately governed by RELEASING.md. No Git tag,
+Action release, deployment, live provider send or real SAP request occurred.

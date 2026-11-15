@@ -1,15 +1,15 @@
 # Release policy — UNRELEASED
 
-## Consistent reporting gate
+## Consistent reporting dependency
 
-**BLOCKED:** this source candidate requires unpublished notification-contract
-0.0.6. Source-tarball integration tests do not establish registry readiness.
-Publication needs separate owner authorization; then verify the exact public
-package, pin a supported exact registry version, regenerate the normal lockfile
-and standalone bundle, and rerun all normal quality/CI/CodeQL checks. Coordinated
-Notify rendering must support the new input context. Existing live validation,
-release and deployment gates remain in force. No Git tag, publication, deployment,
-provider send or real SAP operation is authorized by this reporting change.
+Notification-contract **0.0.6** is published through the owner-authorized
+[package-only run 43678067818](https://github.com/commercekit-tools/action-kit/actions/runs/43678067818).
+This consumer pins the exact registry artifact and bundles it normally with
+ccv2-client 0.0.3 unchanged. Candidate-only validation switches are retired.
+Normal full quality and hosted checks must pass on the current PR head before
+its authorized source merge. See [reporting evidence](docs/consistent-reporting.md).
+All remaining Action-release, provider/live validation and owner gates below
+remain separate. Package publication does not create an Action tag or release.
 
 NO RELEASE UNTIL BUILD, DEPLOY AND NOTIFY ARE SANDBOX-VERIFIED TOGETHER.
 
@@ -38,4 +38,4 @@ No tags, moving v1, GitHub Release, npm publishing, or Marketplace publication u
 
 Merging an implementation is not release authorization.
 
-The current shared dependencies are exactly `@commercekit-tools/notification-contract@0.0.3` and `@commercekit-tools/ccv2-client@0.0.3`. These package versions being published does not release this Action. Any package upgrade requires complete deployment regression tests, all ten guarded Sandbox scenarios (including canary traffic split), and coordinated build → deploy → notify validation again. Rebuild and verify committed dist and license notices. Workflow consumers require no package configuration because dependencies are bundled. Maintainers/CI need GitHub Packages read access for installation.
+The current shared dependencies are exactly `@commercekit-tools/notification-contract@0.0.6` and `@commercekit-tools/ccv2-client@0.0.3`. These package versions being published does not release this Action. Any package upgrade requires complete deployment regression tests, all ten guarded Sandbox scenarios (including canary traffic split), and coordinated build → deploy → notify validation again. Rebuild and verify committed dist and license notices. Workflow consumers require no package configuration because dependencies are bundled. Maintainers/CI need GitHub Packages read access for installation.

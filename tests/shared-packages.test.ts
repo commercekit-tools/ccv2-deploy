@@ -20,19 +20,12 @@ const modes = [
 it("pins published packages without local schema or authentication copies", () => {
   const require = createRequire(import.meta.url);
   const p = JSON.parse(readFileSync("package.json", "utf8"));
-  for (const name of [
-    "@commercekit-tools/notification-contract",
-    "@commercekit-tools/ccv2-client",
-  ]) {
-    const candidate =
-      name === "@commercekit-tools/notification-contract" &&
-      process.env.COMMERCEKIT_CANDIDATE_CONTRACT_VERSION;
-    if (candidate) {
-      expect(candidate).toBe("0.0.6");
-      expect(p.private).toBe(true);
-      expect(p.dependencies[name]).toMatch(/^file:.+\.tgz$/u);
-    } else expect(p.dependencies[name]).toBe("0.0.3");
-    expect(require(name + "/package.json").version).toBe(candidate || "0.0.3");
+  for (const [name, expected] of Object.entries({
+    "@commercekit-tools/notification-contract": "0.0.6",
+    "@commercekit-tools/ccv2-client": "0.0.3",
+  })) {
+    expect(p.dependencies[name]).toBe(expected);
+    expect(require(name + "/package.json").version).toBe(expected);
   }
   expect(
     require("@commercekit-tools/notification-contract/schema").properties
