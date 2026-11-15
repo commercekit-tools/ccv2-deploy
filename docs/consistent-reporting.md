@@ -86,7 +86,7 @@ Status vocabulary: PASS, FAIL, BLOCKED, NOT RUN.
 | -------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
 | Published 0.0.3 baseline frozen installation and full `pnpm quality` | PASS: 279 tests; 98.60% statements, 96.48% branches, 98.48% functions, 99.49% lines                |
 | Input definition parity with `action.yml`                            | Covered by candidate tests: 21 names, confidentiality/presence policy                              |
-| Shared-schema input context and summary/status tests                 | PASS: 310 tests/12 files; 99.12% statements, 97.48% branches, 98.57% functions, 99.76% lines       |
+| Shared-schema input context and summary/status tests                 | PASS: 312 tests/12 files; 99.12% statements, 97.48% branches, 98.57% functions, 99.76% lines       |
 | Actual standalone bundle status/input/masking/summary matrix         | PASS: 6 new status/input/summary cases plus the existing standalone bundle test, mocked fetch only |
 | Normal new-source registry CI/bundle consistency                     | BLOCKED by unpublished 0.0.6; baseline normal files remain unchanged                               |
 | Real SAP, hosted Sandbox dispatch, live Slack/Teams delivery         | NOT RUN                                                                                            |
@@ -108,13 +108,20 @@ call SAP, create a hosted Sandbox run, or deliver a provider webhook.
 ## Reviewed candidate package and final commands
 
 Final tested contract source:
-`b88ed58976af9aee532488d82ea09340b35a4d8c` in existing action-kit.
+`475cc4db42f79310240496201f90d7047aa54330` in existing action-kit.
 It is an **unpublished source candidate**, not a registry dependency.
 
-- Tarball: `commercekit-tools-notification-contract-0.0.6.tgz`, 18852 bytes.
-- SHA256: `645b38e7456e63b96e7630da7d63c1f6ccbf27854b5b7001ff77db435afa2393`.
-- Integrity: `sha512-eqV2tVnjmuYtG5ExjqScPCGxxR8MW8QlbeuXMA/YjzKzujgSMf9oMQpvQDqmysGhHLN8918XtNh9gbO7UQH4Ug==`.
-- Candidate Action bundle SHA256: `98074f2e9ef8f821d1789a604fe0ba385fc9dbf8d2145cf5f5bfc4910115f8b4`.
+This v2 artifact supersedes the earlier candidate after independent privacy
+review. It fixes known-secret percent-escape case variants and canonical
+trailing-dot Slack/Slack Gov webhook hosts. Independent reproductions confirm
+redaction across input snapshots, summary facts and links. New actual producer
+regressions cover mixed-case URL/form-encoded credentials in result, event and
+summary sinks. No API, transport or state-machine code changed for these fixes.
+
+- Tarball: `commercekit-tools-notification-contract-0.0.6.tgz`, 19140 bytes.
+- SHA256: `e4b79576328c2992a96fed087e9ba6e63970e8b54d6fca976a6652702a7a73a9`.
+- Integrity: `sha512-n6F84900sDPBeYm5dnf8HLCM9B2DUVATEeF717dqKsSXTJtq1FIj/3hZ2UcNTtXe7v8R90HYF6HIom4auM8Kyw==`.
+- Candidate Action bundle SHA256: `540d42a2072000d1ffa884c22a7eac933233a5a584c6831be85a1472d1e7744e`.
 
 The final commands actually executed in a fresh private isolated consumer were:
 

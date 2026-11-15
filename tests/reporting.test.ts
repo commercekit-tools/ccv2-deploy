@@ -362,6 +362,33 @@ describe("consistent deployment reporting", () => {
       expect(rendered(c)).toContain("✅");
     },
   );
+  it.each(["url", "form"])(
+    "masks mixed-case percent-encoded credentials in actual %s input/event/summary sinks",
+    async (encoding) => {
+      const secret = "synthetic/private+ value";
+      const encoded = (
+        encoding === "url"
+          ? encodeURIComponent(secret)
+          : new URLSearchParams({ v: secret }).toString().slice(2)
+      ).replaceAll("%2F", "%2f");
+      const c = fakeCore({
+        "client-secret": secret,
+        "build-code": encoded,
+        "validate-deployment-modes": "false",
+      });
+      const result = await run(c.core, harness(terminal()).rt);
+      expect(result.outcome).toBe("success");
+      const value = parse(c.outputs["notification-event"]!);
+      expect(value.status).toBe("success");
+      expect(result.inputs?.["build-code"]).toBe("[REDACTED]");
+      expect(value.data.inputs?.["build-code"]).toBe("[REDACTED]");
+      const sinks = JSON.stringify([result, value, rendered(c)]);
+      expect(sinks).not.toContain(secret);
+      expect(sinks).not.toContain(encoded);
+      expect(c.core.setSecret).toHaveBeenCalledWith(secret);
+      expect(c.core.setFailed).not.toHaveBeenCalled();
+    },
+  );
   it("keeps all invalid Unicode input settings within the shared 64 KiB event bound", async () => {
     const values = Object.fromEntries(
       reporting.inputDefinitions
