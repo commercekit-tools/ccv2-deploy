@@ -8,12 +8,23 @@ import {
 } from "@commercekit-tools/notification-contract";
 const require = createRequire(import.meta.url);
 const manifest = JSON.parse(readFileSync("package.json", "utf8"));
+const candidateVersion = process.env.COMMERCEKIT_CANDIDATE_CONTRACT_VERSION;
+if (candidateVersion !== undefined) {
+  assert.equal(candidateVersion, "0.0.6");
+  assert.equal(manifest.private, true);
+  assert.match(
+    manifest.dependencies["@commercekit-tools/notification-contract"],
+    /^file:.+\.tgz$/u,
+  );
+}
 for (const name of [
   "@commercekit-tools/notification-contract",
   "@commercekit-tools/ccv2-client",
 ]) {
-  assert.equal(manifest.dependencies[name], "0.0.3");
-  assert.equal(require(`${name}/package.json`).version, "0.0.3");
+  const candidate =
+    name === "@commercekit-tools/notification-contract" && candidateVersion;
+  if (!candidate) assert.equal(manifest.dependencies[name], "0.0.3");
+  assert.equal(require(`${name}/package.json`).version, candidate || "0.0.3");
 }
 assert.equal(schema.properties.schemaVersion.const, 1);
 for (const file of [

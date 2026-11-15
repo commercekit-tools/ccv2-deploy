@@ -1,9 +1,10 @@
 import type {
   DeploymentEvent,
   SafeNotificationError,
+  NotificationInputContext,
 } from "@commercekit-tools/notification-contract";
 import type { Operation, Decision } from "./inputs.js";
-export interface Result {
+export interface Result extends Partial<NotificationInputContext> {
   schemaVersion: 1;
   operation: Operation;
   outcome: Exclude<DeploymentEvent["status"], "started">;
@@ -24,6 +25,7 @@ export interface Result {
   timedOut: boolean;
   cancellation?: { requested: boolean; rollbackDatabase: boolean };
   trafficSplit?: { updated: boolean };
+  issues?: SafeNotificationError[];
   error?: Required<SafeNotificationError>;
 }
 export const initialResult = (): Result => ({

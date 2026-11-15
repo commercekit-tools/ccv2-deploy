@@ -1,5 +1,11 @@
 # Contributing
 
+The current reporting feature is an unpublished 0.0.6 contract candidate.
+Read [the candidate validation gate](docs/consistent-reporting.md) before running
+normal validation: source requires new public helpers while normal dependency
+files and dist deliberately remain on published 0.0.3. Do not disguise a source
+package as a registry version or commit a machine-local dependency.
+
 Use Node 24.21.0 and pnpm 12.6.0 (`corepack enable`). Install with `pnpm install --frozen-lockfile`. The package is private and must not be published to npm.
 
 Run `pnpm format`, `pnpm lint`, `pnpm typecheck`, `pnpm contracts:check`, `pnpm test`, `pnpm test:coverage`, `pnpm audit`, `pnpm bundle`, `pnpm bundle:check`, `pnpm scan:public`, and `pnpm quality`. Coverage gates require 95% statements, branches, lines, and functions. Commit reproducible dist and its license inventory.

@@ -1,5 +1,16 @@
 # Release policy — UNRELEASED
 
+## Consistent reporting gate
+
+**BLOCKED:** this source candidate requires unpublished notification-contract
+0.0.6. Source-tarball integration tests do not establish registry readiness.
+Publication needs separate owner authorization; then verify the exact public
+package, pin a supported exact registry version, regenerate the normal lockfile
+and standalone bundle, and rerun all normal quality/CI/CodeQL checks. Coordinated
+Notify rendering must support the new input context. Existing live validation,
+release and deployment gates remain in force. No Git tag, publication, deployment,
+provider send or real SAP operation is authorized by this reporting change.
+
 NO RELEASE UNTIL BUILD, DEPLOY AND NOTIFY ARE SANDBOX-VERIFIED TOGETHER.
 
 No tags, moving v1, GitHub Release, npm publishing, or Marketplace publication until all gates pass:

@@ -23,7 +23,16 @@ export function context(env: NodeJS.ProcessEnv, safe: Sanitizer) {
   return ctx;
 }
 export function event(result: Result, env: NodeJS.ProcessEnv, safe: Sanitizer) {
-  const data: DeploymentEventData = {};
+  const data: DeploymentEventData = {
+    ...(result.inputs
+      ? {
+          inputs: result.inputs,
+          inputsValidated: result.inputsValidated ?? false,
+          inputsTruncated: result.inputsTruncated ?? false,
+        }
+      : {}),
+    ...(result.issues ? { issues: result.issues } : {}),
+  };
   for (const key of [
     "subscriptionCode",
     "deploymentCode",

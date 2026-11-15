@@ -1,5 +1,13 @@
 # CommerceKit CCv2 Deploy
 
+> **Unpublished reporting candidate.** The consistent input/notification/job-summary
+> changes require notification-contract 0.0.6, which is not published. Normal
+> registry manifests, lockfile and committed bundle remain on the published
+> 0.0.3 baseline. Registry build/merge readiness is BLOCKED until separately
+> authorized publication, exact repinning and normal bundle regeneration.
+> See [reporting validation](docs/consistent-reporting.md). Inputs, remote-operation
+> policies and failure semantics remain unchanged.
+
 **UNRELEASED. No v1 tag exists.** Deploy existing SAP Commerce Cloud builds using Cloud Portal technical-user OAuth and provider-neutral NotificationEvent v1 outputs. Build creation is not a public feature.
 
 ## Authentication
@@ -138,7 +146,7 @@ Safe reads and token requests retry selected transient errors at most three atte
 
 ## Result and events
 
-`result-json` is a compact allowlisted schemaVersion 1 object containing operation, outcome, known deployment/build/environment identifiers, modes, last vendor status/percentage, poll count, duration, actionRequired, decision, newDeploymentCode, timedOut, cancellation requested/rollback flags, trafficSplit updated flag, and safe error code/message. Unknown optional fields are omitted. Each JSON output is bounded to 16 KiB. No raw responses, stage/history data, reasons, credentials, or traffic entities are output.
+`result-json` is a compact allowlisted schemaVersion 1 object containing operation, outcome, known deployment/build/environment identifiers, modes, last vendor status/percentage, poll count, duration, actionRequired, decision, newDeploymentCode, timedOut, cancellation requested/rollback flags, trafficSplit updated flag, and safe error code/message. Unknown optional fields are omitted. The reporting candidate bounds structured JSON outputs to 64 KiB, aligned with the shared parser and cleanup; the unchanged published-baseline bundle uses 16 KiB. No raw responses, stage/history data, reasons, credentials, or traffic entities are output.
 
 DEPLOYED → success; FAIL → failure; UNDEPLOYED → cancelled; manual/canary handoff → action-required; timeout, auth/API/client errors or undocumented status → internal-error. Handoffs emit `ccv2.deployment.action-required`; all other final events emit `ccv2.deployment.completed`. Events validate offline through the pinned [shared notification contract](contracts/README.md). Only approved GitHub context variables are read. Links include a validated workflow URL; no Cloud Portal URL is guessed.
 
