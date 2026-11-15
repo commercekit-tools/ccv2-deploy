@@ -1,5 +1,17 @@
 # Shared package ownership
 
+## Current published reporting adoption
+
+The current Action consumes exact registry notification-contract **0.0.6** and
+ccv2-client **0.0.3**. Shared input capture/context, masking, status styles and
+Markdown run-summary rendering are reused alongside the existing event factories,
+validation and context APIs. Normal lockfile and standalone dist are regenerated
+from the registry artifact; no candidate alias or local link is used. See
+[validation and provenance](consistent-reporting.md). The earlier 0.0.3 extraction
+inventory below remains historical evidence; current public pins are those above.
+
+## Historical 0.0.3 extraction
+
 Both packages are published GitHub Packages dependencies pinned exactly to **0.0.3**. No local checkout, workspace link, runtime registry request, or package publishing step is used. The Action remains **UNRELEASED**.
 
 | Area                                                                          | Classification               | Ownership after migration                                                                                                         |

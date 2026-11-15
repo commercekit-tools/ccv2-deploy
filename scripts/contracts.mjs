@@ -1,19 +1,21 @@
 import assert from "node:assert/strict";
 import { existsSync, readFileSync } from "node:fs";
-import { createRequire } from "node:module";
 import schema from "@commercekit-tools/notification-contract/schema" with { type: "json" };
 import {
   createDeploymentEvent,
   validateNotificationEvent,
 } from "@commercekit-tools/notification-contract";
-const require = createRequire(import.meta.url);
 const manifest = JSON.parse(readFileSync("package.json", "utf8"));
-for (const name of [
-  "@commercekit-tools/notification-contract",
-  "@commercekit-tools/ccv2-client",
-]) {
-  assert.equal(manifest.dependencies[name], "0.0.3");
-  assert.equal(require(`${name}/package.json`).version, "0.0.3");
+for (const [name, expected] of Object.entries({
+  "notification-contract": "0.0.6",
+  "ccv2-client": "0.0.3",
+})) {
+  const id = "@commercekit-tools/" + name;
+  const { default: pkg } = await import(id + "/package.json", {
+    with: { type: "json" },
+  });
+  assert.equal(pkg.version, expected);
+  assert.equal(manifest.dependencies[id], expected);
 }
 assert.equal(schema.properties.schemaVersion.const, 1);
 for (const file of [
